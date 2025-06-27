@@ -511,36 +511,28 @@
             hideError();
 
             try {
-                const API_KEY = 'cba7b76137ba4b9c294932d35ee4da68';
+                // Use secure serverless function instead of direct API calls
+                console.log('Using secure API for:', location); // Debug log
                 
-                // Fix for US zip codes - add country code to avoid international confusion
-                let searchQuery = location;
-                if (/^\d{5}(-\d{4})?$/.test(location.trim())) {
-                    // If it's a US zip code (5 digits or 5+4 format), add US country code
-                    searchQuery = `${location.trim()},US`;
-                }
-                
-                console.log('Searching for:', searchQuery); // Debug log
-                
-                // Get current weather
+                // Get current weather through secure API
                 const currentResponse = await fetch(
-                    `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(searchQuery)}&appid=${API_KEY}&units=imperial`
+                    `/api/weather?location=${encodeURIComponent(location)}&type=current`
                 );
                 
                 const currentData = await currentResponse.json();
-                console.log('Current weather:', currentData); // Debug log
+                console.log('Current weather from secure API:', currentData); // Debug log
                 
                 if (currentResponse.ok) {
-                    // Get today's forecast (5-day forecast, we'll use today's data)
+                    // Get today's forecast through secure API
                     let forecastData = null;
                     try {
                         const forecastResponse = await fetch(
-                            `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(searchQuery)}&appid=${API_KEY}&units=imperial`
+                            `/api/weather?location=${encodeURIComponent(location)}&type=forecast`
                         );
                         
                         if (forecastResponse.ok) {
                             forecastData = await forecastResponse.json();
-                            console.log('Forecast data received:', forecastData); // Debug log
+                            console.log('Forecast data received from secure API:', forecastData); // Debug log
                         } else {
                             console.log('Forecast API failed, continuing without forecast'); // Debug log
                         }
@@ -564,7 +556,7 @@
                     
                     displayWeather(weatherData);
                     
-                    // Save the new location (use the original input, not the modified search query)
+                    // Save the new location
                     savedLocation = location;
                     try {
                         localStorage.setItem('weatherWardrobeLocation', savedLocation);
@@ -574,11 +566,11 @@
                     updateUI();
                     
                 } else {
-                    showError(currentData.message || 'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").');
+                    showError(currentData.error || 'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").');
                 }
                 
             } catch (err) {
-                console.log('API call failed, using demo data:', err);
+                console.log('Secure API call failed, using demo data:', err);
                 
                 // Demo weather data with forecast
                 const demoWeather = {
@@ -598,7 +590,7 @@
                 };
                 
                 displayWeather(demoWeather);
-                showError('Note: Using demo weather data. In a real deployment, this would show live weather.');
+                showError('Note: Using demo weather data. The secure API may still be deploying.');
                 
                 // Save location even for demo
                 savedLocation = location;

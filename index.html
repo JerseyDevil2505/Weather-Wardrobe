@@ -1,4 +1,76 @@
-<!DOCTYPE html>
+function getTodaysForecast(forecastData) {
+            if (!forecastData || !forecastData.list) {
+                return null;
+            }
+            
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+            
+            // Filter today's forecast entries (3-hour intervals)
+            const todaysEntries = forecastData.list.filter(entry => {
+                const entryDate = new Date(entry.dt * 1000).toISOString().split('T')[0];
+                return entryDate === todayStr;
+            });
+            
+            if (todaysEntries.length === 0) {
+                return null;
+            }
+            
+            // Find high and low temps for today
+            const temps = todaysEntries.map(entry => entry.main.temp);
+            const high = Math.round(Math.max(...temps));
+            const low = Math.round(Math.min(...temps));
+            
+            // Get afternoon and evening conditions
+            const currentHour = today.getHours();
+            const afternoonEntry = todaysEntries.find(entry => {
+                const hour = new Date(entry.dt * 1000).getHours();
+                return hour >= 14 && hour <= 17; // 2 PM - 5 PM
+            });
+            const eveningEntry = todaysEntries.find(entry => {
+                const hour = new Date(entry.dt * 1000).getHours();
+                return hour >= 18 && hour <= 21; // 6 PM - 9 PM
+            });
+            
+            // Generate alerts based on forecast
+            const alerts = [];
+            
+            // Check for rain/snow later
+            const laterEntries = todaysEntries.filter(entry => {
+                const hour = new Date(entry.dt * 1000).getHours();
+                return hour > currentHour;
+            });
+            
+            const rainLater = laterEntries.some(entry => 
+                entry.weather[0].main.toLowerCase().includes('rain') || 
+                entry.weather[0].main.toLowerCase().includes('drizzle')
+            );
+            const snowLater = laterEntries.some(entry => 
+                entry.weather[0].main.toLowerCase().includes('snow')
+            );
+            const windyLater = laterEntries.some(entry => entry.wind.speed > 15);
+            
+            if (rainLater) alerts.push("Rain expected later today - consider bringing an umbrella!");
+            if (snowLater) alerts.push("Snow expected later - pack extra warm layers!");
+            if (windyLater) alerts.push("Getting windier later - consider a windbreaker!");
+            
+            // Temperature change alerts
+            const currentTemp = Math.round(todaysEntries[0]?.main.temp || 0);
+            if (high - currentTemp > 10) {
+                alerts.push(`Warming up significantly - high of ${high}°F expected!`);
+            }
+            if (currentTemp - low > 10 && currentHour < 18) {
+                alerts.push(`Cooling down later - low of ${low}°F tonight!`);
+            }
+            
+            return {
+                high,
+                low,
+                afternoon: afternoonEntry?.weather[0].main || 'Unknown',
+                evening: eveningEntry?.weather[0].main || 'Unknown',
+                alerts
+            };
+        }<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -210,6 +282,9 @@
                                 <p class="font-semibold" id="windSpeed"></p>
                             </div>
                         </div>
+                        
+                        <!-- Today's Forecast Section -->
+                        <div id="todaysForecast" class="hidden"></div>
                     </div>
 
                     <!-- Clothing Recommendation -->
@@ -387,21 +462,34 @@
                 
                 console.log('Searching for:', searchQuery); // Debug log
                 
-                const response = await fetch(
+                // Get current weather
+                const currentResponse = await fetch(
                     `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(searchQuery)}&appid=${API_KEY}&units=imperial`
                 );
                 
-                const data = await response.json();
-                console.log('API Response:', data); // Debug log
+                const currentData = await currentResponse.json();
+                console.log('Current weather:', currentData); // Debug log
                 
-                if (response.ok) {
+                if (currentResponse.ok) {
+                    // Get today's forecast (5-day forecast, we'll use today's data)
+                    const forecastResponse = await fetch(
+                        `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(searchQuery)}&appid=${API_KEY}&units=imperial`
+                    );
+                    
+                    const forecastData = await forecastResponse.json();
+                    console.log('Forecast data:', forecastData); // Debug log
+                    
+                    // Process today's forecast
+                    const todaysForecast = getTodaysForecast(forecastData);
+                    
                     const weatherData = {
-                        location: `${data.name}, ${data.sys.country}`,
-                        temperature: Math.round(data.main.temp),
-                        condition: data.weather[0].main,
-                        humidity: data.main.humidity,
-                        windSpeed: Math.round(data.wind?.speed || 0),
-                        feelsLike: Math.round(data.main.feels_like)
+                        location: `${currentData.name}, ${currentData.sys.country}`,
+                        temperature: Math.round(currentData.main.temp),
+                        condition: currentData.weather[0].main,
+                        humidity: currentData.main.humidity,
+                        windSpeed: Math.round(currentData.wind?.speed || 0),
+                        feelsLike: Math.round(currentData.main.feels_like),
+                        forecast: todaysForecast
                     };
                     
                     displayWeather(weatherData);
@@ -416,20 +504,27 @@
                     updateUI();
                     
                 } else {
-                    showError(data.message || 'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").');
+                    showError(currentData.message || 'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").');
                 }
                 
             } catch (err) {
                 console.log('API call failed, using demo data:', err);
                 
-                // Demo weather data
+                // Demo weather data with forecast
                 const demoWeather = {
                     location: location,
                     temperature: Math.floor(Math.random() * 50) + 30,
                     condition: ['Clear', 'Clouds', 'Rain', 'Snow'][Math.floor(Math.random() * 4)],
                     humidity: Math.floor(Math.random() * 40) + 40,
                     windSpeed: Math.floor(Math.random() * 15) + 2,
-                    feelsLike: Math.floor(Math.random() * 50) + 30
+                    feelsLike: Math.floor(Math.random() * 50) + 30,
+                    forecast: {
+                        high: Math.floor(Math.random() * 20) + 70,
+                        low: Math.floor(Math.random() * 20) + 40,
+                        afternoon: ['Sunny', 'Cloudy', 'Light Rain'][Math.floor(Math.random() * 3)],
+                        evening: ['Clear', 'Partly Cloudy', 'Overcast'][Math.floor(Math.random() * 3)],
+                        alerts: ['Demo forecast data']
+                    }
                 };
                 
                 displayWeather(demoWeather);
@@ -465,8 +560,41 @@
             const iconContainer = document.getElementById('weatherIcon');
             iconContainer.innerHTML = getWeatherIcon(weather.condition);
             
-            // Update clothing advice
-            const advice = getClothingRecommendation(weather.temperature, weather.condition);
+            // Update today's forecast if available
+            const forecastContainer = document.getElementById('todaysForecast');
+            if (weather.forecast && forecastContainer) {
+                let forecastHTML = `
+                    <div class="bg-blue-50 rounded-xl p-4 mt-4">
+                        <h4 class="font-semibold text-blue-800 mb-2">📅 Today's Forecast</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm mb-3">
+                            <div class="text-center">
+                                <p class="text-blue-600">High</p>
+                                <p class="font-bold text-blue-800">${weather.forecast.high}°F</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-blue-600">Low</p>
+                                <p class="font-bold text-blue-800">${weather.forecast.low}°F</p>
+                            </div>
+                        </div>
+                `;
+                
+                if (weather.forecast.alerts && weather.forecast.alerts.length > 0) {
+                    forecastHTML += '<div class="space-y-1">';
+                    weather.forecast.alerts.forEach(alert => {
+                        forecastHTML += `<p class="text-blue-700 text-xs">⚠️ ${alert}</p>`;
+                    });
+                    forecastHTML += '</div>';
+                }
+                
+                forecastHTML += '</div>';
+                forecastContainer.innerHTML = forecastHTML;
+                forecastContainer.classList.remove('hidden');
+            } else if (forecastContainer) {
+                forecastContainer.classList.add('hidden');
+            }
+            
+            // Update clothing advice (now includes forecast info)
+            const advice = getClothingRecommendation(weather.temperature, weather.condition, weather.forecast);
             document.getElementById('clothingAdvice').textContent = advice;
             
             // Show personalized note if applicable
@@ -495,7 +623,7 @@
             }
         }
 
-        function getClothingRecommendation(temp, condition) {
+        function getClothingRecommendation(temp, condition, forecast) {
             const lowerCondition = condition.toLowerCase();
             let baseTemp = temp;
             
@@ -529,7 +657,7 @@
                 recommendation = "Freezing! Full winter gear - heavy coat, multiple layers, gloves, hat, and scarf. Footwear: waterproof winter boots with good insulation.";
             }
 
-            // Add weather-specific additions
+            // Add current weather-specific additions
             if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle')) {
                 recommendation += " Weather alert: It's rainy - wear waterproof shoes or rain boots, and don't forget an umbrella!";
             }
@@ -538,6 +666,27 @@
             }
             if (lowerCondition.includes('wind')) {
                 recommendation += " Windy conditions: Consider a windbreaker and make sure your shoes are secure.";
+            }
+
+            // Add forecast-based recommendations
+            if (forecast && forecast.alerts && forecast.alerts.length > 0) {
+                recommendation += " ";
+                // Add specific recommendations based on forecast alerts
+                if (forecast.alerts.some(alert => alert.includes('Rain'))) {
+                    recommendation += "Pack an umbrella for later! ";
+                }
+                if (forecast.alerts.some(alert => alert.includes('Snow'))) {
+                    recommendation += "Bring extra layers for snow later! ";
+                }
+                if (forecast.alerts.some(alert => alert.includes('wind'))) {
+                    recommendation += "Consider bringing a windbreaker for later! ";
+                }
+                if (forecast.alerts.some(alert => alert.includes('Warming up'))) {
+                    recommendation += "Dress in layers - you can remove them as it warms up! ";
+                }
+                if (forecast.alerts.some(alert => alert.includes('Cooling down'))) {
+                    recommendation += "Bring an extra layer for when it cools down later! ";
+                }
             }
 
             // Add preference explanation

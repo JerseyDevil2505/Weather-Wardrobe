@@ -360,11 +360,22 @@
 
             try {
                 const API_KEY = 'cba7b76137ba4b9c294932d35ee4da68';
+                
+                // Fix for US zip codes - add country code to avoid international confusion
+                let searchQuery = location;
+                if (/^\d{5}(-\d{4})?$/.test(location.trim())) {
+                    // If it's a US zip code (5 digits or 5+4 format), add US country code
+                    searchQuery = `${location.trim()},US`;
+                }
+                
+                console.log('Searching for:', searchQuery); // Debug log
+                
                 const response = await fetch(
-                    `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${API_KEY}&units=imperial`
+                    `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(searchQuery)}&appid=${API_KEY}&units=imperial`
                 );
                 
                 const data = await response.json();
+                console.log('API Response:', data); // Debug log
                 
                 if (response.ok) {
                     const weatherData = {
@@ -390,7 +401,7 @@
                     }
                     
                 } else {
-                    showError(data.message || 'Location not found. Please try again.');
+                    showError(data.message || 'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").');
                 }
                 
             } catch (err) {

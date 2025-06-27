@@ -335,15 +335,23 @@
         }
 
         function editLocation() {
+            // Clear saved location temporarily to force using input field
+            const tempSavedLocation = savedLocation;
+            savedLocation = '';
+            
             document.getElementById('savedLocationDiv').classList.add('hidden');
             document.getElementById('locationInputDiv').classList.remove('hidden');
-            document.getElementById('locationInput').value = savedLocation;
+            document.getElementById('locationInput').value = tempSavedLocation;
             document.getElementById('locationInput').focus();
+            document.getElementById('locationInput').select(); // Select all text for easy replacement
         }
 
         async function getWeather() {
             const locationInput = document.getElementById('locationInput');
-            const location = savedLocation || locationInput.value.trim();
+            const inputValue = locationInput.value.trim();
+            
+            // Use input field value if we're in edit mode, otherwise use saved location
+            const location = document.getElementById('locationInputDiv').classList.contains('hidden') ? savedLocation : inputValue;
             
             if (!location) {
                 showError('Please enter a location');
@@ -389,16 +397,14 @@
                     
                     displayWeather(weatherData);
                     
-                    // Save location
-                    if (savedLocation !== location) {
-                        savedLocation = location;
-                        try {
-                            localStorage.setItem('weatherWardrobeLocation', savedLocation);
-                        } catch (e) {
-                            console.log('Cannot save location');
-                        }
-                        updateUI();
+                    // Save the new location (use the original input, not the modified search query)
+                    savedLocation = location;
+                    try {
+                        localStorage.setItem('weatherWardrobeLocation', savedLocation);
+                    } catch (e) {
+                        console.log('Cannot save location');
                     }
+                    updateUI();
                     
                 } else {
                     showError(data.message || 'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").');
@@ -421,15 +427,13 @@
                 showError('Note: Using demo weather data. In a real deployment, this would show live weather.');
                 
                 // Save location even for demo
-                if (savedLocation !== location) {
-                    savedLocation = location;
-                    try {
-                        localStorage.setItem('weatherWardrobeLocation', savedLocation);
-                    } catch (e) {
-                        console.log('Cannot save location');
-                    }
-                    updateUI();
+                savedLocation = location;
+                try {
+                    localStorage.setItem('weatherWardrobeLocation', savedLocation);
+                } catch (e) {
+                    console.log('Cannot save location');
                 }
+                updateUI();
             } finally {
                 // Reset button
                 button.textContent = originalText;

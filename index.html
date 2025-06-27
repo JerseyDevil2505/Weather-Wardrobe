@@ -336,33 +336,42 @@
 
         function editLocation() {
             // Clear saved location temporarily to force using input field
-            const tempSavedLocation = savedLocation;
             savedLocation = '';
             
             document.getElementById('savedLocationDiv').classList.add('hidden');
             document.getElementById('locationInputDiv').classList.remove('hidden');
-            document.getElementById('locationInput').value = tempSavedLocation;
-            document.getElementById('locationInput').focus();
-            document.getElementById('locationInput').select(); // Select all text for easy replacement
+            
+            const locationInput = document.getElementById('locationInput');
+            locationInput.focus();
+            locationInput.select(); // Select all text for easy replacement
+            
+            console.log('Edit mode activated, savedLocation cleared'); // Debug log
         }
 
         async function getWeather() {
             const locationInput = document.getElementById('locationInput');
             const inputValue = locationInput.value.trim();
             
-            // Use input field value if we're in edit mode, otherwise use saved location
-            const location = document.getElementById('locationInputDiv').classList.contains('hidden') ? savedLocation : inputValue;
+            console.log('getWeather called with input:', inputValue); // Debug log
+            console.log('savedLocation:', savedLocation); // Debug log
+            
+            // Use input field value if it exists and we're not in saved mode
+            const location = inputValue || savedLocation;
             
             if (!location) {
                 showError('Please enter a location');
                 return;
             }
 
+            console.log('Final location to search:', location); // Debug log
+
             // Show loading state
             const button = document.getElementById('getWeatherBtn') || document.getElementById('quickWeatherBtn');
-            const originalText = button.textContent;
-            button.innerHTML = '<div class="spinner mx-auto"></div>';
-            button.disabled = true;
+            if (button) {
+                const originalText = button.textContent;
+                button.innerHTML = '<div class="spinner mx-auto"></div>';
+                button.disabled = true;
+            }
 
             hideError();
 
@@ -436,8 +445,10 @@
                 updateUI();
             } finally {
                 // Reset button
-                button.textContent = originalText;
-                button.disabled = false;
+                if (button) {
+                    button.textContent = button.id === 'getWeatherBtn' ? 'Get Clothing Advice' : 'Get Today\'s Clothing Advice';
+                    button.disabled = false;
+                }
             }
         }
 
@@ -548,9 +559,19 @@
             document.getElementById('errorDiv').classList.add('hidden');
         }
 
-        // Allow Enter key to search
+        // Allow Enter key to search - with proper event handling
         document.getElementById('locationInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form submission/page refresh
+                e.stopPropagation(); // Stop event bubbling
+                getWeather();
+            }
+        });
+
+        // Also prevent any form submission if the input is somehow in a form
+        document.getElementById('locationInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
                 getWeather();
             }
         });

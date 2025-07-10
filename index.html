@@ -162,7 +162,7 @@
               </select>
             </div>
 
-            <div id="stateProvinceSection" class="hidden">
+            <div id="stateProvinceSection">
               <label
                 class="block text-sm font-medium text-gray-700 mb-2"
                 id="stateProvinceLabel"
@@ -896,6 +896,8 @@
       window.addEventListener("load", function () {
         loadUserData();
         updateUI();
+        // Ensure state section shows for US/CA users
+        updateStateProvinceVisibility();
       });
 
       function loadUserData() {

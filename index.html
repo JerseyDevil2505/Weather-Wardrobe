@@ -38,6 +38,14 @@
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
+      .spinner-sm {
+        width: 12px;
+        height: 12px;
+        border: 2px solid rgba(100, 100, 100, 0.3);
+        border-top: 2px solid #666;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
       @keyframes spin {
         0% {
           transform: rotate(0deg);
@@ -45,6 +53,18 @@
         100% {
           transform: rotate(360deg);
         }
+      }
+      .suggestion-item {
+        padding: 8px 16px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.2s;
+      }
+      .suggestion-item:hover {
+        background-color: #f8fafc;
+      }
+      .suggestion-item:last-child {
+        border-bottom: none;
       }
       .app-icon {
         width: 48px;
@@ -132,123 +152,6 @@
                 placeholder="Enter your name"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Country</label
-              >
-              <select
-                id="countrySelect"
-                onchange="setCountry(this.value)"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="US">United States</option>
-                <option value="CA">Canada</option>
-                <option value="GB">United Kingdom</option>
-                <option value="AU">Australia</option>
-                <option value="DE">Germany</option>
-                <option value="FR">France</option>
-                <option value="IT">Italy</option>
-                <option value="ES">Spain</option>
-                <option value="NL">Netherlands</option>
-                <option value="JP">Japan</option>
-                <option value="IN">India</option>
-                <option value="BR">Brazil</option>
-                <option value="MX">Mexico</option>
-                <option value="AR">Argentina</option>
-                <option value="ZA">South Africa</option>
-                <option value="">Other</option>
-              </select>
-            </div>
-
-            <div id="stateProvinceSection">
-              <label
-                class="block text-sm font-medium text-gray-700 mb-2"
-                id="stateProvinceLabel"
-                >State</label
-              >
-              <select
-                id="stateProvinceSelect"
-                onchange="setStateProvince(this.value)"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select state...</option>
-                <!-- US States -->
-                <option value="AL" data-country="US">Alabama</option>
-                <option value="AK" data-country="US">Alaska</option>
-                <option value="AZ" data-country="US">Arizona</option>
-                <option value="AR" data-country="US">Arkansas</option>
-                <option value="CA" data-country="US">California</option>
-                <option value="CO" data-country="US">Colorado</option>
-                <option value="CT" data-country="US">Connecticut</option>
-                <option value="DE" data-country="US">Delaware</option>
-                <option value="FL" data-country="US">Florida</option>
-                <option value="GA" data-country="US">Georgia</option>
-                <option value="HI" data-country="US">Hawaii</option>
-                <option value="ID" data-country="US">Idaho</option>
-                <option value="IL" data-country="US">Illinois</option>
-                <option value="IN" data-country="US">Indiana</option>
-                <option value="IA" data-country="US">Iowa</option>
-                <option value="KS" data-country="US">Kansas</option>
-                <option value="KY" data-country="US">Kentucky</option>
-                <option value="LA" data-country="US">Louisiana</option>
-                <option value="ME" data-country="US">Maine</option>
-                <option value="MD" data-country="US">Maryland</option>
-                <option value="MA" data-country="US">Massachusetts</option>
-                <option value="MI" data-country="US">Michigan</option>
-                <option value="MN" data-country="US">Minnesota</option>
-                <option value="MS" data-country="US">Mississippi</option>
-                <option value="MO" data-country="US">Missouri</option>
-                <option value="MT" data-country="US">Montana</option>
-                <option value="NE" data-country="US">Nebraska</option>
-                <option value="NV" data-country="US">Nevada</option>
-                <option value="NH" data-country="US">New Hampshire</option>
-                <option value="NJ" data-country="US">New Jersey</option>
-                <option value="NM" data-country="US">New Mexico</option>
-                <option value="NY" data-country="US">New York</option>
-                <option value="NC" data-country="US">North Carolina</option>
-                <option value="ND" data-country="US">North Dakota</option>
-                <option value="OH" data-country="US">Ohio</option>
-                <option value="OK" data-country="US">Oklahoma</option>
-                <option value="OR" data-country="US">Oregon</option>
-                <option value="PA" data-country="US">Pennsylvania</option>
-                <option value="RI" data-country="US">Rhode Island</option>
-                <option value="SC" data-country="US">South Carolina</option>
-                <option value="SD" data-country="US">South Dakota</option>
-                <option value="TN" data-country="US">Tennessee</option>
-                <option value="TX" data-country="US">Texas</option>
-                <option value="UT" data-country="US">Utah</option>
-                <option value="VT" data-country="US">Vermont</option>
-                <option value="VA" data-country="US">Virginia</option>
-                <option value="WA" data-country="US">Washington</option>
-                <option value="WV" data-country="US">West Virginia</option>
-                <option value="WI" data-country="US">Wisconsin</option>
-                <option value="WY" data-country="US">Wyoming</option>
-                <option value="DC" data-country="US">
-                  District of Columbia
-                </option>
-                <!-- Canadian Provinces -->
-                <option value="AB" data-country="CA">Alberta</option>
-                <option value="BC" data-country="CA">British Columbia</option>
-                <option value="MB" data-country="CA">Manitoba</option>
-                <option value="NB" data-country="CA">New Brunswick</option>
-                <option value="NL" data-country="CA">
-                  Newfoundland and Labrador
-                </option>
-                <option value="NS" data-country="CA">Nova Scotia</option>
-                <option value="ON" data-country="CA">Ontario</option>
-                <option value="PE" data-country="CA">
-                  Prince Edward Island
-                </option>
-                <option value="QC" data-country="CA">Quebec</option>
-                <option value="SK" data-country="CA">Saskatchewan</option>
-                <option value="NT" data-country="CA">
-                  Northwest Territories
-                </option>
-                <option value="NU" data-country="CA">Nunavut</option>
-                <option value="YT" data-country="CA">Yukon</option>
-              </select>
             </div>
 
             <div>
@@ -528,7 +431,7 @@
           <div id="locationInputDiv" class="mb-6">
             <div class="relative">
               <svg
-                class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
+                class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -549,9 +452,28 @@
               <input
                 type="text"
                 id="locationInput"
-                placeholder="Enter city, state, or zip code"
+                placeholder="Enter city name or zip code"
+                autocomplete="off"
                 class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                oninput="handleLocationInput(this.value)"
+                onblur="setTimeout(() => hideLocationSuggestions(), 150)"
+                onfocus="showRecentSuggestions()"
               />
+
+              <!-- Autocomplete Dropdown -->
+              <div
+                id="locationSuggestions"
+                class="hidden absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+              >
+                <div id="suggestionsList" class="py-1"></div>
+                <div
+                  id="loadingSuggestion"
+                  class="hidden px-4 py-2 text-sm text-gray-500 flex items-center"
+                >
+                  <div class="spinner-sm mr-2"></div>
+                  Searching locations...
+                </div>
+              </div>
             </div>
 
             <button
@@ -884,8 +806,6 @@
         activityLevel: "moderate",
         stylePreference: "casual",
         workEnvironment: "indoor",
-        country: "US",
-        stateProvince: "",
         specialConsiderations: [],
         hasLearned: false,
       };
@@ -896,8 +816,6 @@
       window.addEventListener("load", function () {
         loadUserData();
         updateUI();
-        // Ensure state section shows for US/CA users
-        updateStateProvinceVisibility();
       });
 
       function loadUserData() {
@@ -944,12 +862,8 @@
           document.getElementById("userName").value = userProfile.name;
         }
 
-        // Update country selection
-        document.getElementById("countrySelect").value = userProfile.country;
-        document.getElementById("stateProvinceSelect").value =
-          userProfile.stateProvince;
-        updateStateProvinceVisibility();
-        updateLocationPlaceholder();
+        // Load recent locations for autocomplete
+        loadRecentLocations();
 
         // Update temperature preference buttons
         document.querySelectorAll(".temp-btn").forEach((btn) => {
@@ -1035,125 +949,6 @@
       function setWorkEnv(env) {
         userProfile.workEnvironment = env;
         updateUI();
-      }
-
-      function setCountry(country) {
-        userProfile.country = country;
-        userProfile.stateProvince = ""; // Reset state when country changes
-        updateStateProvinceVisibility();
-        updateLocationPlaceholder();
-      }
-
-      function setStateProvince(stateProvince) {
-        userProfile.stateProvince = stateProvince;
-        updateLocationPlaceholder();
-      }
-
-      function updateStateProvinceVisibility() {
-        const stateSection = document.getElementById("stateProvinceSection");
-        const stateLabel = document.getElementById("stateProvinceLabel");
-        const stateSelect = document.getElementById("stateProvinceSelect");
-
-        if (userProfile.country === "US") {
-          stateSection.classList.remove("hidden");
-          stateLabel.textContent = "State";
-          // Show only US states
-          Array.from(stateSelect.options).forEach((option) => {
-            if (option.value === "") {
-              option.style.display = "block";
-              option.textContent = "Select state...";
-            } else if (option.dataset.country === "US") {
-              option.style.display = "block";
-            } else {
-              option.style.display = "none";
-            }
-          });
-        } else if (userProfile.country === "CA") {
-          stateSection.classList.remove("hidden");
-          stateLabel.textContent = "Province";
-          // Show only Canadian provinces
-          Array.from(stateSelect.options).forEach((option) => {
-            if (option.value === "") {
-              option.style.display = "block";
-              option.textContent = "Select province...";
-            } else if (option.dataset.country === "CA") {
-              option.style.display = "block";
-            } else {
-              option.style.display = "none";
-            }
-          });
-        } else {
-          stateSection.classList.add("hidden");
-        }
-
-        // Reset selection when changing country
-        stateSelect.value = userProfile.stateProvince;
-      }
-
-      function updateLocationPlaceholder() {
-        const locationInput = document.getElementById("locationInput");
-        if (userProfile.country === "US") {
-          if (userProfile.stateProvince) {
-            locationInput.placeholder = "Enter city or zip code";
-          } else {
-            locationInput.placeholder = "Enter city, state, or zip code";
-          }
-        } else if (userProfile.country === "CA") {
-          if (userProfile.stateProvince) {
-            locationInput.placeholder = "Enter city or postal code";
-          } else {
-            locationInput.placeholder = "Enter city, province, or postal code";
-          }
-        } else if (userProfile.country === "GB") {
-          locationInput.placeholder = "Enter city or postcode";
-        } else if (userProfile.country === "") {
-          locationInput.placeholder =
-            "Enter city name with country (e.g., 'Paris, FR')";
-        } else {
-          locationInput.placeholder = "Enter city name";
-        }
-      }
-
-      function formatLocationDisplay(cityName, countryCode) {
-        // Capitalize city name properly
-        const formattedCity = cityName
-          .split(" ")
-          .map(
-            (word) =>
-              word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
-          )
-          .join(" ");
-
-        // Map country codes to state abbreviations for US/Canada
-        if (countryCode === "US" && userProfile.stateProvince) {
-          return `${formattedCity}, ${userProfile.stateProvince}`;
-        } else if (countryCode === "CA" && userProfile.stateProvince) {
-          return `${formattedCity}, ${userProfile.stateProvince}`;
-        } else if (countryCode === "US") {
-          // Show full country name if no state is set
-          return `${formattedCity}, United States`;
-        } else if (countryCode === "CA") {
-          return `${formattedCity}, Canada`;
-        } else {
-          // For other countries, show the country code or name
-          const countryNames = {
-            GB: "United Kingdom",
-            AU: "Australia",
-            DE: "Germany",
-            FR: "France",
-            IT: "Italy",
-            ES: "Spain",
-            NL: "Netherlands",
-            JP: "Japan",
-            IN: "India",
-            BR: "Brazil",
-            MX: "Mexico",
-            AR: "Argentina",
-            ZA: "South Africa",
-          };
-          const countryName = countryNames[countryCode] || countryCode;
-          return `${formattedCity}, ${countryName}`;
-        }
       }
 
       function toggleSpecialConsideration(consideration) {
@@ -1372,20 +1167,21 @@
           return;
         }
 
-        // Enhance location with state/province and country for better API results
+        // Smart location handling
         let enhancedLocation = location;
-        if (userProfile.country && userProfile.country !== "") {
-          // If it's just a city name (no comma), add state and country
-          if (!location.includes(",") && !location.match(/^\d{5}(-\d{4})?$/)) {
-            if (
-              userProfile.stateProvince &&
-              (userProfile.country === "US" || userProfile.country === "CA")
-            ) {
-              enhancedLocation = `${location},${userProfile.stateProvince},${userProfile.country}`;
-            } else {
-              enhancedLocation = `${location},${userProfile.country}`;
-            }
-          }
+        let useCoordinates = false;
+
+        // If user selected a location from autocomplete, use coordinates for precise results
+        if (selectedLocation && selectedLocation.lat && selectedLocation.lon) {
+          enhancedLocation = `lat=${selectedLocation.lat}&lon=${selectedLocation.lon}`;
+          useCoordinates = true;
+          console.log(
+            "Using coordinates for precise location:",
+            enhancedLocation,
+          );
+        } else {
+          // For direct input (like zip codes), use the text as-is
+          console.log("Using text-based location:", enhancedLocation);
         }
 
         console.log("Final location to search:", enhancedLocation); // Debug log
@@ -1407,9 +1203,11 @@
           console.log("Using secure API for:", location); // Debug log
 
           // Get current weather through secure API
-          const currentResponse = await fetch(
-            `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=current`,
-          );
+          const currentUrl = useCoordinates
+            ? `/api/weather?${enhancedLocation}&type=current`
+            : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=current`;
+
+          const currentResponse = await fetch(currentUrl);
 
           const currentData = await currentResponse.json();
           console.log("Current weather from secure API:", currentData); // Debug log
@@ -1418,9 +1216,11 @@
             // Get today's forecast through secure API
             let forecastData = null;
             try {
-              const forecastResponse = await fetch(
-                `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=forecast`,
-              );
+              const forecastUrl = useCoordinates
+                ? `/api/weather?${enhancedLocation}&type=forecast`
+                : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=forecast`;
+
+              const forecastResponse = await fetch(forecastUrl);
 
               if (forecastResponse.ok) {
                 forecastData = await forecastResponse.json();
@@ -1443,10 +1243,7 @@
 
             // Use API-resolved city name (e.g., "08077" becomes "Cinnaminson")
             const weatherData = {
-              location: formatLocationDisplay(
-                currentData.name,
-                currentData.sys.country,
-              ),
+              location: `${currentData.name}, ${currentData.sys.country}`,
               temperature: Math.round(currentData.main.temp),
               condition: currentData.weather[0].main,
               humidity: currentData.main.humidity,
@@ -1475,63 +1272,16 @@
           console.log("Secure API call failed, using demo data:", err);
 
           // Demo weather data with forecast
-          // Simulate zip code resolution for demo mode
+          // Simple demo location handling
           let demoLocationName = location;
 
-          // Common NJ zip codes for testing
-          const njZipCodes = {
-            "08077": "Cinnaminson",
-            "08075": "Delran",
-            "08003": "Cherry Hill",
-            "07302": "Jersey City",
-            "07030": "Hoboken",
-            "07102": "Newark",
-            "08701": "Lakewood",
-            "08540": "Princeton",
-            "07748": "Middletown",
-            "08901": "New Brunswick",
-            "07960": "Morristown",
-          };
-
-          // Common CA zip codes for testing
-          const caZipCodes = {
-            90210: "Beverly Hills",
-            94102: "San Francisco",
-            90401: "Santa Monica",
-            92101: "San Diego",
-            95014: "Cupertino",
-            94301: "Palo Alto",
-            90405: "Santa Monica",
-            91601: "North Hollywood",
-            92037: "La Jolla",
-            94107: "San Francisco",
-          };
-
-          // Check if input is a zip code and resolve it
+          // If it's a zip code, use demo city name
           if (location.match(/^\d{5}(-\d{4})?$/)) {
-            if (
-              userProfile.country === "US" &&
-              userProfile.stateProvince === "NJ" &&
-              njZipCodes[location]
-            ) {
-              demoLocationName = njZipCodes[location];
-            } else if (
-              userProfile.country === "US" &&
-              userProfile.stateProvince === "CA" &&
-              caZipCodes[location]
-            ) {
-              demoLocationName = caZipCodes[location];
-            } else {
-              // Generic city name for unknown zip codes
-              demoLocationName = "Demo City";
-            }
+            demoLocationName = "Demo City";
           }
 
           const demoWeather = {
-            location: formatLocationDisplay(
-              demoLocationName,
-              userProfile.country || "US",
-            ),
+            location: demoLocationName,
             temperature: Math.floor(Math.random() * 50) + 30,
             condition: ["Clear", "Clouds", "Rain", "Snow"][
               Math.floor(Math.random() * 4)
@@ -1737,6 +1487,561 @@
 
       function hideError() {
         document.getElementById("errorDiv").classList.add("hidden");
+      }
+
+      // Location autocomplete functionality
+      let searchTimeout;
+      let selectedLocation = null;
+      let recentLocations = [];
+
+      function handleLocationInput(value) {
+        clearTimeout(searchTimeout);
+        const trimmedValue = value.trim();
+
+        if (trimmedValue.length === 0) {
+          hideLocationSuggestions();
+          return;
+        }
+
+        // If it looks like a zip code, don't search for suggestions
+        if (/^\d{1,5}$/.test(trimmedValue)) {
+          hideLocationSuggestions();
+          return;
+        }
+
+        // Debounce search requests
+        searchTimeout = setTimeout(() => {
+          if (trimmedValue.length >= 2) {
+            searchLocations(trimmedValue);
+          }
+        }, 300);
+      }
+
+      async function searchLocations(query) {
+        const suggestionsList = document.getElementById("suggestionsList");
+        const loadingDiv = document.getElementById("loadingSuggestion");
+        const suggestionsContainer = document.getElementById(
+          "locationSuggestions",
+        );
+
+        // Show loading state
+        suggestionsList.innerHTML = "";
+        loadingDiv.classList.remove("hidden");
+        suggestionsContainer.classList.remove("hidden");
+
+        try {
+          // Use OpenWeather Geocoding API
+          const response = await fetch(
+            `/api/geocoding?q=${encodeURIComponent(query)}&limit=8`,
+          );
+
+          if (response.ok) {
+            const locations = await response.json();
+            displayLocationSuggestions(locations);
+          } else {
+            // Fallback to demo suggestions
+            displayDemoSuggestions(query);
+          }
+        } catch (error) {
+          console.log("Geocoding API failed, using demo suggestions:", error);
+          displayDemoSuggestions(query);
+        }
+
+        loadingDiv.classList.add("hidden");
+      }
+
+      function displayLocationSuggestions(locations) {
+        const suggestionsList = document.getElementById("suggestionsList");
+        const suggestionsContainer = document.getElementById(
+          "locationSuggestions",
+        );
+
+        suggestionsList.innerHTML = "";
+
+        if (locations.length === 0) {
+          suggestionsList.innerHTML =
+            '<div class="px-4 py-2 text-sm text-gray-500">No locations found</div>';
+          return;
+        }
+
+        locations.forEach((location) => {
+          const displayName = formatLocationName(location);
+          const suggestionItem = document.createElement("div");
+          suggestionItem.className = "suggestion-item text-sm";
+          suggestionItem.innerHTML = `
+            <div class="font-medium text-gray-900">${displayName}</div>
+            <div class="text-xs text-gray-500">${location.country || ""}</div>
+          `;
+
+          suggestionItem.onclick = () => selectLocation(location, displayName);
+          suggestionsList.appendChild(suggestionItem);
+        });
+
+        suggestionsContainer.classList.remove("hidden");
+      }
+
+      function displayDemoSuggestions(query) {
+        // Demo suggestions for common US cities
+        const demoSuggestions = [
+          {
+            name: "New York",
+            state: "NY",
+            country: "US",
+            lat: 40.7128,
+            lon: -74.006,
+          },
+          {
+            name: "Los Angeles",
+            state: "CA",
+            country: "US",
+            lat: 34.0522,
+            lon: -118.2437,
+          },
+          {
+            name: "Chicago",
+            state: "IL",
+            country: "US",
+            lat: 41.8781,
+            lon: -87.6298,
+          },
+          {
+            name: "Houston",
+            state: "TX",
+            country: "US",
+            lat: 29.7604,
+            lon: -95.3698,
+          },
+          {
+            name: "Phoenix",
+            state: "AZ",
+            country: "US",
+            lat: 33.4484,
+            lon: -112.074,
+          },
+          {
+            name: "Philadelphia",
+            state: "PA",
+            country: "US",
+            lat: 39.9526,
+            lon: -75.1652,
+          },
+          {
+            name: "San Antonio",
+            state: "TX",
+            country: "US",
+            lat: 29.4241,
+            lon: -98.4936,
+          },
+          {
+            name: "San Diego",
+            state: "CA",
+            country: "US",
+            lat: 32.7157,
+            lon: -117.1611,
+          },
+          {
+            name: "Dallas",
+            state: "TX",
+            country: "US",
+            lat: 32.7767,
+            lon: -96.797,
+          },
+          {
+            name: "San Jose",
+            state: "CA",
+            country: "US",
+            lat: 37.3382,
+            lon: -121.8863,
+          },
+          {
+            name: "Austin",
+            state: "TX",
+            country: "US",
+            lat: 30.2672,
+            lon: -97.7431,
+          },
+          {
+            name: "Jacksonville",
+            state: "FL",
+            country: "US",
+            lat: 30.3322,
+            lon: -81.6557,
+          },
+          {
+            name: "Fort Worth",
+            state: "TX",
+            country: "US",
+            lat: 32.7555,
+            lon: -97.3308,
+          },
+          {
+            name: "Columbus",
+            state: "OH",
+            country: "US",
+            lat: 39.9612,
+            lon: -82.9988,
+          },
+          {
+            name: "Charlotte",
+            state: "NC",
+            country: "US",
+            lat: 35.2271,
+            lon: -80.8431,
+          },
+          {
+            name: "San Francisco",
+            state: "CA",
+            country: "US",
+            lat: 37.7749,
+            lon: -122.4194,
+          },
+          {
+            name: "Indianapolis",
+            state: "IN",
+            country: "US",
+            lat: 39.7684,
+            lon: -86.1581,
+          },
+          {
+            name: "Seattle",
+            state: "WA",
+            country: "US",
+            lat: 47.6062,
+            lon: -122.3321,
+          },
+          {
+            name: "Denver",
+            state: "CO",
+            country: "US",
+            lat: 39.7392,
+            lon: -104.9903,
+          },
+          {
+            name: "Boston",
+            state: "MA",
+            country: "US",
+            lat: 42.3601,
+            lon: -71.0589,
+          },
+          {
+            name: "El Paso",
+            state: "TX",
+            country: "US",
+            lat: 31.7619,
+            lon: -106.485,
+          },
+          {
+            name: "Detroit",
+            state: "MI",
+            country: "US",
+            lat: 42.3314,
+            lon: -83.0458,
+          },
+          {
+            name: "Nashville",
+            state: "TN",
+            country: "US",
+            lat: 36.1627,
+            lon: -86.7816,
+          },
+          {
+            name: "Portland",
+            state: "OR",
+            country: "US",
+            lat: 45.5152,
+            lon: -122.6784,
+          },
+          {
+            name: "Las Vegas",
+            state: "NV",
+            country: "US",
+            lat: 36.1699,
+            lon: -115.1398,
+          },
+          {
+            name: "Oklahoma City",
+            state: "OK",
+            country: "US",
+            lat: 35.4676,
+            lon: -97.5164,
+          },
+          {
+            name: "Memphis",
+            state: "TN",
+            country: "US",
+            lat: 35.1495,
+            lon: -90.049,
+          },
+          {
+            name: "Louisville",
+            state: "KY",
+            country: "US",
+            lat: 38.2527,
+            lon: -85.7585,
+          },
+          {
+            name: "Baltimore",
+            state: "MD",
+            country: "US",
+            lat: 39.2904,
+            lon: -76.6122,
+          },
+          {
+            name: "Milwaukee",
+            state: "WI",
+            country: "US",
+            lat: 43.0389,
+            lon: -87.9065,
+          },
+          {
+            name: "Albuquerque",
+            state: "NM",
+            country: "US",
+            lat: 35.0844,
+            lon: -106.6504,
+          },
+          {
+            name: "Tucson",
+            state: "AZ",
+            country: "US",
+            lat: 32.2226,
+            lon: -110.9747,
+          },
+          {
+            name: "Fresno",
+            state: "CA",
+            country: "US",
+            lat: 36.7378,
+            lon: -119.7871,
+          },
+          {
+            name: "Sacramento",
+            state: "CA",
+            country: "US",
+            lat: 38.5816,
+            lon: -121.4944,
+          },
+          {
+            name: "Kansas City",
+            state: "MO",
+            country: "US",
+            lat: 39.0997,
+            lon: -94.5786,
+          },
+          {
+            name: "Mesa",
+            state: "AZ",
+            country: "US",
+            lat: 33.4152,
+            lon: -111.8315,
+          },
+          {
+            name: "Atlanta",
+            state: "GA",
+            country: "US",
+            lat: 33.749,
+            lon: -84.388,
+          },
+          {
+            name: "Colorado Springs",
+            state: "CO",
+            country: "US",
+            lat: 38.8339,
+            lon: -104.8214,
+          },
+          {
+            name: "Omaha",
+            state: "NE",
+            country: "US",
+            lat: 41.2565,
+            lon: -95.9345,
+          },
+          {
+            name: "Raleigh",
+            state: "NC",
+            country: "US",
+            lat: 35.7796,
+            lon: -78.6382,
+          },
+          {
+            name: "Miami",
+            state: "FL",
+            country: "US",
+            lat: 25.7617,
+            lon: -80.1918,
+          },
+          {
+            name: "Virginia Beach",
+            state: "VA",
+            country: "US",
+            lat: 36.8529,
+            lon: -75.978,
+          },
+          {
+            name: "Oakland",
+            state: "CA",
+            country: "US",
+            lat: 37.8044,
+            lon: -122.2711,
+          },
+          {
+            name: "Minneapolis",
+            state: "MN",
+            country: "US",
+            lat: 44.9778,
+            lon: -93.265,
+          },
+          {
+            name: "Tulsa",
+            state: "OK",
+            country: "US",
+            lat: 36.154,
+            lon: -95.9928,
+          },
+          {
+            name: "Arlington",
+            state: "TX",
+            country: "US",
+            lat: 32.7357,
+            lon: -97.1081,
+          },
+          {
+            name: "New Orleans",
+            state: "LA",
+            country: "US",
+            lat: 29.9511,
+            lon: -90.0715,
+          },
+          {
+            name: "Wichita",
+            state: "KS",
+            country: "US",
+            lat: 37.6872,
+            lon: -97.3301,
+          },
+          {
+            name: "Cleveland",
+            state: "OH",
+            country: "US",
+            lat: 41.4993,
+            lon: -81.6944,
+          },
+          {
+            name: "Tampa",
+            state: "FL",
+            country: "US",
+            lat: 27.9506,
+            lon: -82.4572,
+          },
+          {
+            name: "Riverside",
+            state: "CA",
+            country: "US",
+            lat: 33.9533,
+            lon: -117.3962,
+          },
+          {
+            name: "Riverside",
+            state: "NJ",
+            country: "US",
+            lat: 40.0368,
+            lon: -74.9632,
+          },
+        ];
+
+        const filtered = demoSuggestions
+          .filter((city) =>
+            city.name.toLowerCase().includes(query.toLowerCase()),
+          )
+          .slice(0, 8);
+
+        displayLocationSuggestions(filtered);
+      }
+
+      function formatLocationName(location) {
+        if (location.state) {
+          return `${location.name}, ${location.state}`;
+        } else if (location.country) {
+          return `${location.name}, ${location.country}`;
+        }
+        return location.name;
+      }
+
+      function selectLocation(location, displayName) {
+        selectedLocation = location;
+        document.getElementById("locationInput").value = displayName;
+        hideLocationSuggestions();
+
+        // Add to recent locations
+        addToRecentLocations(location, displayName);
+      }
+
+      function addToRecentLocations(location, displayName) {
+        // Remove if already exists
+        recentLocations = recentLocations.filter(
+          (item) => item.displayName !== displayName,
+        );
+
+        // Add to front
+        recentLocations.unshift({ location, displayName });
+
+        // Keep only last 5
+        recentLocations = recentLocations.slice(0, 5);
+
+        // Save to localStorage
+        try {
+          localStorage.setItem(
+            "weatherWardrobeRecentLocations",
+            JSON.stringify(recentLocations),
+          );
+        } catch (e) {
+          console.log("Cannot save recent locations");
+        }
+      }
+
+      function loadRecentLocations() {
+        try {
+          const saved = localStorage.getItem("weatherWardrobeRecentLocations");
+          if (saved) {
+            recentLocations = JSON.parse(saved);
+          }
+        } catch (e) {
+          console.log("Cannot load recent locations");
+        }
+      }
+
+      function showRecentSuggestions() {
+        if (
+          recentLocations.length > 0 &&
+          document.getElementById("locationInput").value.trim() === ""
+        ) {
+          const suggestionsList = document.getElementById("suggestionsList");
+          const suggestionsContainer = document.getElementById(
+            "locationSuggestions",
+          );
+
+          suggestionsList.innerHTML =
+            '<div class="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">Recent Locations</div>';
+
+          recentLocations.forEach((item) => {
+            const suggestionItem = document.createElement("div");
+            suggestionItem.className = "suggestion-item text-sm";
+            suggestionItem.innerHTML = `
+              <div class="font-medium text-gray-900">${item.displayName}</div>
+              <div class="text-xs text-gray-500">Recent</div>
+            `;
+
+            suggestionItem.onclick = () =>
+              selectLocation(item.location, item.displayName);
+            suggestionsList.appendChild(suggestionItem);
+          });
+
+          suggestionsContainer.classList.remove("hidden");
+        }
+      }
+
+      function hideLocationSuggestions() {
+        document.getElementById("locationSuggestions").classList.add("hidden");
       }
 
       function getDetailedClothingRecommendations(

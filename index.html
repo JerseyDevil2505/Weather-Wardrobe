@@ -1176,14 +1176,19 @@
         // Smart location handling
         let enhancedLocation = location;
         let useCoordinates = false;
+        let preferredLocationName = null;
 
         // If user selected a location from autocomplete, use coordinates for precise results
         if (selectedLocation && selectedLocation.lat && selectedLocation.lon) {
           enhancedLocation = `lat=${selectedLocation.lat}&lon=${selectedLocation.lon}`;
           useCoordinates = true;
+          // Preserve the full location name with state
+          preferredLocationName = formatLocationName(selectedLocation);
           console.log(
             "Using coordinates for precise location:",
             enhancedLocation,
+            "with preferred name:",
+            preferredLocationName,
           );
         } else {
           // For direct input (like zip codes or typed cities), use the text as-is
@@ -1252,9 +1257,22 @@
               : getSimpleForecast(currentData);
             console.log("Processed forecast:", todaysForecast); // Debug log
 
-            // Use API-resolved city name (e.g., "08077" becomes "Cinnaminson")
+            // Use preferred location name from autocomplete or format from API response
+            let locationDisplay;
+            if (preferredLocationName) {
+              // Use the full name from autocomplete selection (includes state)
+              locationDisplay = preferredLocationName;
+            } else {
+              // Format from API response
+              locationDisplay = currentData.name;
+              if (currentData.sys.state) {
+                locationDisplay += `, ${currentData.sys.state}`;
+              }
+              locationDisplay += `, ${currentData.sys.country}`;
+            }
+
             const weatherData = {
-              location: `${currentData.name}, ${currentData.sys.country}`,
+              location: locationDisplay,
               temperature: Math.round(currentData.main.temp),
               condition: currentData.weather[0].main,
               humidity: currentData.main.humidity,

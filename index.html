@@ -1180,9 +1180,14 @@
             enhancedLocation,
           );
         } else {
-          // For direct input (like zip codes), use the text as-is
+          // For direct input (like zip codes or typed cities), use the text as-is
+          enhancedLocation = location;
+          useCoordinates = false;
           console.log("Using text-based location:", enhancedLocation);
         }
+
+        // Reset selectedLocation for next search
+        selectedLocation = null;
 
         console.log("Final location to search:", enhancedLocation); // Debug log
 

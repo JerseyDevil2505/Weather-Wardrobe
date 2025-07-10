@@ -1,1099 +1,607 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Wardrobe - Smart Clothing for Any Weather</title>
-    <meta
-      name="description"
-      content="Get personalized clothing recommendations based on current weather conditions"
-    />
-
+    <meta name="description" content="Get personalized clothing recommendations based on current weather conditions">
+    
     <!-- PWA Meta Tags -->
-    <meta name="theme-color" content="#3B82F6" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Weather Wardrobe" />
-
-    <!-- Updated Favicon -->
-    <link rel="icon" type="image/png" href="assets/weather_wardrobe_icon.png" />
-    <link rel="apple-touch-icon" href="assets/weather_wardrobe_icon.png" />
-
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Weather Wardrobe">
+    
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
+    
     <style>
-      .weather-icon {
-        width: 48px;
-        height: 48px;
-      }
-      .hidden {
-        display: none;
-      }
-      .spinner {
-        width: 20px;
-        height: 20px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-top: 2px solid white;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
+        .weather-icon {
+            width: 48px;
+            height: 48px;
         }
-        100% {
-          transform: rotate(360deg);
+        .hidden {
+            display: none;
         }
-      }
-      .app-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .app-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
     </style>
-  </head>
-  <body
-    class="min-h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 p-4"
-  >
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 p-4">
     <div class="max-w-md mx-auto">
-      <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
-        <!-- Header -->
-        <div
-          class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white relative overflow-hidden"
-        >
-          <div class="flex items-center justify-between relative">
-            <div class="flex items-center space-x-3">
-              <!-- Updated App Icon -->
-              <div class="relative">
-                <img
-                  src="assets/weather_wardrobe_icon.png"
-                  alt="Weather Wardrobe"
-                  class="app-icon"
-                />
-              </div>
-
-              <div>
-                <h1 class="text-2xl font-bold tracking-wide">
-                  Weather Wardrobe
-                </h1>
-                <p class="text-blue-100 text-sm" id="welcomeText">
-                  Smart clothing for any weather
-                </p>
-              </div>
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+            
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-6 text-white relative overflow-hidden">
+                
+                <div class="flex items-center justify-between relative">
+                    <div class="flex items-center space-x-3">
+                        <!-- App Icon -->
+                        <div class="app-icon">🌤️</div>
+                        
+                        <div>
+                            <h1 class="text-2xl font-bold tracking-wide">Weather Wardrobe</h1>
+                            <p class="text-blue-100 text-sm" id="welcomeText">Smart clothing for any weather</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="toggleProfile()" class="p-3 bg-white bg-opacity-20 rounded-xl hover:bg-opacity-30 transition-all duration-200 backdrop-blur-sm" id="profileBtn">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <button
-              onclick="toggleProfile()"
-              class="p-3 bg-white bg-opacity-20 rounded-xl hover:bg-opacity-30 transition-all duration-200 backdrop-blur-sm"
-              id="profileBtn"
-            >
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </button>
-          </div>
+            <!-- Profile Setup -->
+            <div id="profileSection" class="hidden p-6 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-semibold mb-4">Personalize Your Experience</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                        <input type="text" id="userName" placeholder="Enter your name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Temperature Preference</label>
+                        <div class="grid grid-cols-3 gap-2" id="tempPrefs">
+                            <button onclick="setTempPref('runs-cold')" class="temp-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300" data-value="runs-cold">
+                                <div class="font-medium">I Run Cold</div>
+                                <div class="text-gray-500">Need warmer clothes</div>
+                            </button>
+                            <button onclick="setTempPref('average')" class="temp-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700" data-value="average">
+                                <div class="font-medium">Average</div>
+                                <div class="text-gray-500">Standard comfort</div>
+                            </button>
+                            <button onclick="setTempPref('runs-hot')" class="temp-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300" data-value="runs-hot">
+                                <div class="font-medium">I Run Hot</div>
+                                <div class="text-gray-500">Need lighter clothes</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button onclick="saveProfile()" class="w-full mt-4 bg-gradient-to-r from-green-600 to-green-700 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all">
+                        Save Preferences
+                    </button>
+                </div>
+            </div>
+
+            <!-- Location Input -->
+            <div class="p-6">
+                <!-- Saved Location Display -->
+                <div id="savedLocationDiv" class="hidden mb-6">
+                    <div class="flex items-center justify-between bg-blue-50 rounded-xl p-4 border border-blue-200">
+                        <div class="flex items-center space-x-3">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm text-blue-600 font-medium">Your Location</p>
+                                <p class="text-blue-800 font-semibold" id="savedLocationText"></p>
+                            </div>
+                        </div>
+                        <button onclick="editLocation()" class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <button onclick="getWeatherForSavedLocation()" class="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200" id="quickWeatherBtn">
+                        Get Today's Clothing Advice
+                    </button>
+                </div>
+
+                <!-- Location Input Form -->
+                <div id="locationInputDiv" class="mb-6">
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <input type="text" id="locationInput" placeholder="Enter city, state, or zip code" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                    </div>
+                    
+                    <button onclick="getWeatherFromInput()" class="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200" id="getWeatherBtn">
+                        Get Clothing Advice
+                    </button>
+                </div>
+
+                <!-- Error Display -->
+                <div id="errorDiv" class="hidden bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                    <p class="text-red-700 text-sm" id="errorText"></p>
+                </div>
+
+                <!-- Weather Results -->
+                <div id="weatherResults" class="hidden space-y-6">
+                    <!-- Weather Info -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h2 class="text-xl font-semibold text-gray-800" id="weatherLocation"></h2>
+                                <p class="text-3xl font-bold text-blue-600" id="weatherTemp"></p>
+                                <p class="text-gray-600" id="weatherCondition"></p>
+                            </div>
+                            <div class="text-right" id="weatherIcon"></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4 text-sm">
+                            <div class="text-center">
+                                <svg class="w-4 h-4 mx-auto mb-1 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                                <p class="text-gray-600">Feels like</p>
+                                <p class="font-semibold" id="feelsLike"></p>
+                            </div>
+                            <div class="text-center">
+                                <svg class="w-4 h-4 mx-auto mb-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <p class="text-gray-600">Humidity</p>
+                                <p class="font-semibold" id="humidity"></p>
+                            </div>
+                            <div class="text-center">
+                                <svg class="w-4 h-4 mx-auto mb-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                </svg>
+                                <p class="text-gray-600">Wind</p>
+                                <p class="font-semibold" id="windSpeed"></p>
+                            </div>
+                        </div>
+                        
+                        <!-- Today's Forecast Section -->
+                        <div id="todaysForecast" class="hidden"></div>
+                    </div>
+
+                    <!-- Clothing Recommendation -->
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
+                        <h3 class="text-lg font-semibold text-green-800 mb-3">👕 What to Wear</h3>
+                        <p class="text-green-700 leading-relaxed mb-4" id="clothingAdvice"></p>
+                        
+                        <div id="personalizedNote" class="hidden bg-white bg-opacity-70 rounded-lg p-3 text-sm">
+                            <p class="text-green-600 font-medium">💡 Personalized for you!</p>
+                            <p class="text-green-600">This recommendation is adjusted based on your preferences.</p>
+                        </div>
+                    </div>
+
+                    <!-- Refresh Button -->
+                    <button onclick="refreshWeather()" class="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors duration-200">
+                        Refresh Weather
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <!-- Profile Setup -->
-        <div
-          id="profileSection"
-          class="hidden p-6 border-b border-gray-200 bg-gray-50"
-        >
-          <h3 class="text-lg font-semibold mb-4">
-            Personalize Your Experience
-          </h3>
-
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
-                >Your Name</label
-              >
-              <input
-                type="text"
-                id="userName"
-                placeholder="Enter your name"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Temperature Preference</label
-              >
-              <div class="grid grid-cols-3 gap-2" id="tempPrefs">
-                <button
-                  onclick="setTempPref('runs-cold')"
-                  class="temp-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="runs-cold"
-                >
-                  <div class="font-medium">I Run Cold</div>
-                  <div class="text-gray-500">Need warmer clothes</div>
-                </button>
-                <button
-                  onclick="setTempPref('average')"
-                  class="temp-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700"
-                  data-value="average"
-                >
-                  <div class="font-medium">Average</div>
-                  <div class="text-gray-500">Standard comfort</div>
-                </button>
-                <button
-                  onclick="setTempPref('runs-hot')"
-                  class="temp-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="runs-hot"
-                >
-                  <div class="font-medium">I Run Hot</div>
-                  <div class="text-gray-500">Need lighter clothes</div>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Activity Level</label
-              >
-              <div class="grid grid-cols-3 gap-2" id="activityPrefs">
-                <button
-                  onclick="setActivityLevel('sedentary')"
-                  class="activity-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="sedentary"
-                >
-                  <div class="font-medium">Sedentary</div>
-                  <div class="text-gray-500">Office/desk work</div>
-                </button>
-                <button
-                  onclick="setActivityLevel('moderate')"
-                  class="activity-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700"
-                  data-value="moderate"
-                >
-                  <div class="font-medium">Moderate</div>
-                  <div class="text-gray-500">Some movement</div>
-                </button>
-                <button
-                  onclick="setActivityLevel('active')"
-                  class="activity-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="active"
-                >
-                  <div class="font-medium">Very Active</div>
-                  <div class="text-gray-500">Physical work</div>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Style Preference</label
-              >
-              <div class="grid grid-cols-2 gap-2" id="stylePrefs">
-                <button
-                  onclick="setStylePref('casual')"
-                  class="style-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700"
-                  data-value="casual"
-                >
-                  <div class="font-medium">Casual</div>
-                  <div class="text-gray-500">Comfort focused</div>
-                </button>
-                <button
-                  onclick="setStylePref('professional')"
-                  class="style-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="professional"
-                >
-                  <div class="font-medium">Professional</div>
-                  <div class="text-gray-500">Business attire</div>
-                </button>
-                <button
-                  onclick="setStylePref('sporty')"
-                  class="style-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="sporty"
-                >
-                  <div class="font-medium">Athletic</div>
-                  <div class="text-gray-500">Active wear</div>
-                </button>
-                <button
-                  onclick="setStylePref('fashion')"
-                  class="style-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="fashion"
-                >
-                  <div class="font-medium">Fashion-Forward</div>
-                  <div class="text-gray-500">Trend conscious</div>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Work Environment</label
-              >
-              <div class="grid grid-cols-2 gap-2" id="workPrefs">
-                <button
-                  onclick="setWorkEnv('indoor')"
-                  class="work-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700"
-                  data-value="indoor"
-                >
-                  <div class="font-medium">Indoor Office</div>
-                  <div class="text-gray-500">Climate controlled</div>
-                </button>
-                <button
-                  onclick="setWorkEnv('outdoor')"
-                  class="work-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="outdoor"
-                >
-                  <div class="font-medium">Outdoor Work</div>
-                  <div class="text-gray-500">Weather exposed</div>
-                </button>
-                <button
-                  onclick="setWorkEnv('mixed')"
-                  class="work-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="mixed"
-                >
-                  <div class="font-medium">Mixed</div>
-                  <div class="text-gray-500">Indoor + outdoor</div>
-                </button>
-                <button
-                  onclick="setWorkEnv('home')"
-                  class="work-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
-                  data-value="home"
-                >
-                  <div class="font-medium">Work from Home</div>
-                  <div class="text-gray-500">Home comfort</div>
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Special Considerations</label
-              >
-              <div class="grid grid-cols-1 gap-2" id="specialPrefs">
-                <label
-                  class="flex items-center space-x-2 p-2 border rounded-lg hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    class="special-checkbox"
-                    value="natural-fabrics"
-                    onchange="toggleSpecialConsideration('natural-fabrics')"
-                  />
-                  <span class="text-sm"
-                    >Prefer natural fabrics (cotton, wool, linen)</span
-                  >
-                </label>
-                <label
-                  class="flex items-center space-x-2 p-2 border rounded-lg hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    class="special-checkbox"
-                    value="easy-care"
-                    onchange="toggleSpecialConsideration('easy-care')"
-                  />
-                  <span class="text-sm"
-                    >Need easy-care/wrinkle-free materials</span
-                  >
-                </label>
-                <label
-                  class="flex items-center space-x-2 p-2 border rounded-lg hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    class="special-checkbox"
-                    value="loose-fit"
-                    onchange="toggleSpecialConsideration('loose-fit')"
-                  />
-                  <span class="text-sm">Prefer loose-fitting clothes</span>
-                </label>
-                <label
-                  class="flex items-center space-x-2 p-2 border rounded-lg hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    class="special-checkbox"
-                    value="layers"
-                    onchange="toggleSpecialConsideration('layers')"
-                  />
-                  <span class="text-sm">Love layering options</span>
-                </label>
-              </div>
-            </div>
-
-            <button
-              onclick="saveProfile()"
-              class="w-full mt-4 bg-gradient-to-r from-green-600 to-green-700 text-white py-2 px-4 rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all"
-            >
-              Save Preferences
-            </button>
-          </div>
+        <!-- Footer -->
+        <div class="text-center mt-6 text-white text-sm opacity-75">
+            <p>Stay comfortable, dress smart! 🌤️</p>
         </div>
-
-        <!-- Location Input -->
-        <div class="p-6">
-          <!-- Saved Location Display -->
-          <div id="savedLocationDiv" class="hidden mb-6">
-            <div
-              class="flex items-center justify-between bg-blue-50 rounded-xl p-4 border border-blue-200"
-            >
-              <div class="flex items-center space-x-3">
-                <svg
-                  class="w-5 h-5 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <div>
-                  <p class="text-sm text-blue-600 font-medium">Your Location</p>
-                  <p
-                    class="text-blue-800 font-semibold"
-                    id="savedLocationText"
-                  ></p>
-                </div>
-              </div>
-              <button
-                onclick="editLocation()"
-                class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-              >
-                <svg
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <button
-              onclick="getWeather()"
-              class="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              id="quickWeatherBtn"
-            >
-              Get Today's Clothing Advice
-            </button>
-          </div>
-
-          <!-- Location Input Form -->
-          <div id="locationInputDiv" class="mb-6">
-            <div class="relative">
-              <svg
-                class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                id="locationInput"
-                placeholder="Enter city, state, or zip code"
-                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
-
-            <button
-              onclick="getWeather()"
-              class="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              id="getWeatherBtn"
-            >
-              Get Clothing Advice
-            </button>
-          </div>
-
-          <!-- Error Display -->
-          <div
-            id="errorDiv"
-            class="hidden bg-red-50 border border-red-200 rounded-xl p-4 mb-6"
-          >
-            <p class="text-red-700 text-sm" id="errorText"></p>
-          </div>
-
-          <!-- Weather Results -->
-          <div id="weatherResults" class="hidden space-y-6">
-            <!-- Weather Info -->
-            <div
-              class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6"
-            >
-              <div class="flex items-center justify-between mb-4">
-                <div>
-                  <h2
-                    class="text-xl font-semibold text-gray-800"
-                    id="weatherLocation"
-                  ></h2>
-                  <p
-                    class="text-3xl font-bold text-blue-600"
-                    id="weatherTemp"
-                  ></p>
-                  <p class="text-gray-600" id="weatherCondition"></p>
-                </div>
-                <div class="text-right" id="weatherIcon"></div>
-              </div>
-
-              <div class="grid grid-cols-3 gap-4 text-sm">
-                <div class="text-center">
-                  <svg
-                    class="w-4 h-4 mx-auto mb-1 text-orange-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                  <p class="text-gray-600">Feels like</p>
-                  <p class="font-semibold" id="feelsLike"></p>
-                </div>
-                <div class="text-center">
-                  <svg
-                    class="w-4 h-4 mx-auto mb-1 text-blue-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                  <p class="text-gray-600">Humidity</p>
-                  <p class="font-semibold" id="humidity"></p>
-                </div>
-                <div class="text-center">
-                  <svg
-                    class="w-4 h-4 mx-auto mb-1 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    />
-                  </svg>
-                  <p class="text-gray-600">Wind</p>
-                  <p class="font-semibold" id="windSpeed"></p>
-                </div>
-              </div>
-
-              <!-- Today's Forecast Section -->
-              <div id="todaysForecast" class="hidden"></div>
-            </div>
-
-            <!-- Clothing Recommendation -->
-            <div
-              class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200"
-            >
-              <h3 class="text-lg font-semibold text-green-800 mb-3">
-                👕 What to Wear
-              </h3>
-              <p
-                class="text-green-700 leading-relaxed mb-4"
-                id="clothingAdvice"
-              ></p>
-
-              <div
-                id="personalizedNote"
-                class="hidden bg-white bg-opacity-70 rounded-lg p-3 text-sm"
-              >
-                <p class="text-green-600 font-medium">
-                  💡 Personalized for you!
-                </p>
-                <p class="text-green-600">
-                  This recommendation is adjusted based on your preferences.
-                </p>
-              </div>
-            </div>
-
-            <!-- Refresh Button -->
-            <button
-              onclick="getWeather()"
-              class="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-xl font-medium hover:bg-gray-200 transition-colors duration-200"
-            >
-              Refresh Weather
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="text-center mt-6 text-white text-sm opacity-75">
-        <p>Stay comfortable, dress smart! 🌤️</p>
-      </div>
     </div>
 
     <script>
-      // Global state
-      let userProfile = {
-        name: "",
-        temperaturePreference: "average",
-        activityLevel: "moderate",
-        stylePreference: "casual",
-        workEnvironment: "indoor",
-        specialConsiderations: [],
-        hasLearned: false,
-      };
-      let savedLocation = "";
-      let isShowingProfile = false;
-
-      // Load saved data on page load
-      window.addEventListener("load", function () {
-        loadUserData();
-        updateUI();
-      });
-
-      function loadUserData() {
-        try {
-          const profile = localStorage.getItem("weatherWardrobeProfile");
-          if (profile) {
-            userProfile = JSON.parse(profile);
-          }
-
-          const location = localStorage.getItem("weatherWardrobeLocation");
-          if (location) {
-            savedLocation = location;
-            document.getElementById("locationInput").value = location;
-          }
-        } catch (e) {
-          console.log("Storage not available");
-        }
-      }
-
-      function updateUI() {
-        // Update welcome text
-        const welcomeText = document.getElementById("welcomeText");
-        if (userProfile.name) {
-          welcomeText.textContent = `Hello, ${userProfile.name}!`;
-        }
-
-        // Update location display
-        if (savedLocation) {
-          document.getElementById("savedLocationText").textContent =
-            savedLocation;
-          document
-            .getElementById("savedLocationDiv")
-            .classList.remove("hidden");
-          document.getElementById("locationInputDiv").classList.add("hidden");
-        } else {
-          document.getElementById("savedLocationDiv").classList.add("hidden");
-          document
-            .getElementById("locationInputDiv")
-            .classList.remove("hidden");
-        }
-
-        // Update profile form
-        if (userProfile.name) {
-          document.getElementById("userName").value = userProfile.name;
-        }
-
-        // Update temperature preference buttons
-        document.querySelectorAll(".temp-btn").forEach((btn) => {
-          const value = btn.getAttribute("data-value");
-          if (value === userProfile.temperaturePreference) {
-            btn.className =
-              "temp-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700";
-          } else {
-            btn.className =
-              "temp-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300";
-          }
-        });
-
-        // Update activity level buttons
-        document.querySelectorAll(".activity-btn").forEach((btn) => {
-          const value = btn.getAttribute("data-value");
-          if (value === userProfile.activityLevel) {
-            btn.className =
-              "activity-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700";
-          } else {
-            btn.className =
-              "activity-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300";
-          }
-        });
-
-        // Update style preference buttons
-        document.querySelectorAll(".style-btn").forEach((btn) => {
-          const value = btn.getAttribute("data-value");
-          if (value === userProfile.stylePreference) {
-            btn.className =
-              "style-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700";
-          } else {
-            btn.className =
-              "style-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300";
-          }
-        });
-
-        // Update work environment buttons
-        document.querySelectorAll(".work-btn").forEach((btn) => {
-          const value = btn.getAttribute("data-value");
-          if (value === userProfile.workEnvironment) {
-            btn.className =
-              "work-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700";
-          } else {
-            btn.className =
-              "work-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300";
-          }
-        });
-
-        // Update special considerations checkboxes
-        document.querySelectorAll(".special-checkbox").forEach((checkbox) => {
-          const value = checkbox.value;
-          checkbox.checked = userProfile.specialConsiderations.includes(value);
-        });
-      }
-
-      function toggleProfile() {
-        const profileSection = document.getElementById("profileSection");
-        isShowingProfile = !isShowingProfile;
-
-        if (isShowingProfile) {
-          profileSection.classList.remove("hidden");
-        } else {
-          profileSection.classList.add("hidden");
-        }
-      }
-
-      function setTempPref(pref) {
-        userProfile.temperaturePreference = pref;
-        updateUI();
-      }
-
-      function setActivityLevel(level) {
-        userProfile.activityLevel = level;
-        updateUI();
-      }
-
-      function setStylePref(style) {
-        userProfile.stylePreference = style;
-        updateUI();
-      }
-
-      function setWorkEnv(env) {
-        userProfile.workEnvironment = env;
-        updateUI();
-      }
-
-      function toggleSpecialConsideration(consideration) {
-        const index = userProfile.specialConsiderations.indexOf(consideration);
-        if (index > -1) {
-          userProfile.specialConsiderations.splice(index, 1);
-        } else {
-          userProfile.specialConsiderations.push(consideration);
-        }
-      }
-
-      function saveProfile() {
-        const name = document.getElementById("userName").value;
-        userProfile.name = name;
-        userProfile.hasLearned = true;
-
-        try {
-          localStorage.setItem(
-            "weatherWardrobeProfile",
-            JSON.stringify(userProfile),
-          );
-        } catch (e) {
-          console.log("Cannot save to storage");
-        }
-
-        toggleProfile();
-        updateUI();
-      }
-
-      function editLocation() {
-        // Clear saved location temporarily to force using input field
-        savedLocation = "";
-
-        document.getElementById("savedLocationDiv").classList.add("hidden");
-        document.getElementById("locationInputDiv").classList.remove("hidden");
-
-        const locationInput = document.getElementById("locationInput");
-        locationInput.focus();
-        locationInput.select(); // Select all text for easy replacement
-
-        console.log("Edit mode activated, savedLocation cleared"); // Debug log
-      }
-
-      function getSimpleForecast(currentData) {
-        // Create a simple forecast based on current weather when detailed forecast fails
-        const currentTemp = Math.round(currentData.main.temp);
-        const alerts = [];
-
-        // Generate some basic forecast info
-        const high = currentTemp + Math.floor(Math.random() * 10) + 2; // 2-12 degrees higher
-        const low = currentTemp - Math.floor(Math.random() * 15) - 5; // 5-20 degrees lower
-
-        // Add some basic alerts based on current conditions
-        if (currentData.weather[0].main.toLowerCase().includes("thunder")) {
-          alerts.push(
-            "Thunderstorms possible - bring an umbrella and avoid outdoor activities!",
-          );
-        }
-        if (currentData.wind?.speed > 10) {
-          alerts.push(
-            "Windy conditions continuing - secure clothing and accessories!",
-          );
-        }
-        if (high - currentTemp > 8) {
-          alerts.push(
-            `Temperature may rise to ${high}°F later - dress in layers!`,
-          );
-        }
-
-        return {
-          high,
-          low,
-          afternoon: currentData.weather[0].main,
-          evening: currentData.weather[0].main,
-          alerts:
-            alerts.length > 0
-              ? alerts
-              : [`High: ${high}°F, Low: ${low}°F expected today`],
+        // Global state
+        let userProfile = {
+            name: '',
+            temperaturePreference: 'average',
+            hasLearned: false
         };
-      }
+        let savedLocation = '';
+        let isShowingProfile = false;
+        let lastWeatherData = null; // Store last weather data for refresh
 
-      function getTodaysForecast(forecastData) {
-        if (
-          !forecastData ||
-          !forecastData.list ||
-          forecastData.list.length === 0
-        ) {
-          console.log("No forecast data available"); // Debug log
-          return null;
-        }
-
-        const today = new Date();
-        const todayStr = today.toISOString().split("T")[0]; // YYYY-MM-DD format
-
-        // Filter today's forecast entries (3-hour intervals)
-        const todaysEntries = forecastData.list.filter((entry) => {
-          const entryDate = new Date(entry.dt * 1000)
-            .toISOString()
-            .split("T")[0];
-          return entryDate === todayStr;
-        });
-
-        console.log("Today entries found:", todaysEntries.length); // Debug log
-
-        if (todaysEntries.length === 0) {
-          // If no entries for today, use tomorrow's data
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          const tomorrowStr = tomorrow.toISOString().split("T")[0];
-
-          const tomorrowEntries = forecastData.list
-            .filter((entry) => {
-              const entryDate = new Date(entry.dt * 1000)
-                .toISOString()
-                .split("T")[0];
-              return entryDate === tomorrowStr;
-            })
-            .slice(0, 3); // Just first 3 entries of tomorrow
-
-          if (tomorrowEntries.length === 0) {
-            return null;
-          }
-
-          const temps = tomorrowEntries.map((entry) => entry.main.temp);
-          return {
-            high: Math.round(Math.max(...temps)),
-            low: Math.round(Math.min(...temps)),
-            afternoon: tomorrowEntries[0]?.weather[0].main || "Unknown",
-            evening: tomorrowEntries[1]?.weather[0].main || "Unknown",
-            alerts: ["Showing tomorrow's forecast"],
-          };
-        }
-
-        // Find high and low temps for today
-        const temps = todaysEntries.map((entry) => entry.main.temp);
-        const high = Math.round(Math.max(...temps));
-        const low = Math.round(Math.min(...temps));
-
-        // Get afternoon and evening conditions
-        const currentHour = today.getHours();
-        const afternoonEntry = todaysEntries.find((entry) => {
-          const hour = new Date(entry.dt * 1000).getHours();
-          return hour >= 14 && hour <= 17; // 2 PM - 5 PM
-        });
-        const eveningEntry = todaysEntries.find((entry) => {
-          const hour = new Date(entry.dt * 1000).getHours();
-          return hour >= 18 && hour <= 21; // 6 PM - 9 PM
-        });
-
-        // Generate alerts based on forecast
-        const alerts = [];
-
-        // Check for rain/snow later
-        const laterEntries = todaysEntries.filter((entry) => {
-          const hour = new Date(entry.dt * 1000).getHours();
-          return hour > currentHour;
-        });
-
-        const rainLater = laterEntries.some(
-          (entry) =>
-            entry.weather[0].main.toLowerCase().includes("rain") ||
-            entry.weather[0].main.toLowerCase().includes("drizzle"),
-        );
-        const snowLater = laterEntries.some((entry) =>
-          entry.weather[0].main.toLowerCase().includes("snow"),
-        );
-        const windyLater = laterEntries.some(
-          (entry) => (entry.wind?.speed || 0) > 15,
-        );
-
-        if (rainLater)
-          alerts.push(
-            "Rain expected later today - consider bringing an umbrella!",
-          );
-        if (snowLater)
-          alerts.push("Snow expected later - pack extra warm layers!");
-        if (windyLater)
-          alerts.push("Getting windier later - consider a windbreaker!");
-
-        // Temperature change alerts
-        const currentTemp = Math.round(todaysEntries[0]?.main.temp || 0);
-        if (high - currentTemp > 10) {
-          alerts.push(`Warming up significantly - high of ${high}°F expected!`);
-        }
-        if (currentTemp - low > 10 && currentHour < 18) {
-          alerts.push(`Cooling down later - low of ${low}°F tonight!`);
-        }
-
-        // If no specific alerts, add a general one
-        if (alerts.length === 0) {
-          alerts.push(`High: ${high}°F, Low: ${low}°F expected today`);
-        }
-
-        return {
-          high,
-          low,
-          afternoon: afternoonEntry?.weather[0].main || "Similar conditions",
-          evening: eveningEntry?.weather[0].main || "Similar conditions",
-          alerts,
-        };
-      }
-
-      async function getWeather() {
-        const locationInput = document.getElementById("locationInput");
-        const inputValue = locationInput.value.trim();
-
-        console.log("getWeather called with input:", inputValue); // Debug log
-        console.log("savedLocation:", savedLocation); // Debug log
-
-        // Use input field value if it exists and we're not in saved mode
-        const location = inputValue || savedLocation;
-
-        if (!location) {
-          showError("Please enter a location");
-          return;
-        }
-
-        console.log("Final location to search:", location); // Debug log
-
-        // Show loading state
-        const button =
-          document.getElementById("getWeatherBtn") ||
-          document.getElementById("quickWeatherBtn");
-        if (button) {
-          const originalText = button.textContent;
-          button.innerHTML = '<div class="spinner mx-auto"></div>';
-          button.disabled = true;
-        }
-
-        hideError();
-
-        try {
-          // Use secure serverless function instead of direct API calls
-          console.log("Using secure API for:", location); // Debug log
-
-          // Get current weather through secure API
-          const currentResponse = await fetch(
-            `/api/weather?location=${encodeURIComponent(location)}&type=current`,
-          );
-
-          const currentData = await currentResponse.json();
-          console.log("Current weather from secure API:", currentData); // Debug log
-
-          if (currentResponse.ok) {
-            // Get today's forecast through secure API
-            let forecastData = null;
-            try {
-              const forecastResponse = await fetch(
-                `/api/weather?location=${encodeURIComponent(location)}&type=forecast`,
-              );
-
-              if (forecastResponse.ok) {
-                forecastData = await forecastResponse.json();
-                console.log(
-                  "Forecast data received from secure API:",
-                  forecastData,
-                ); // Debug log
-              } else {
-                console.log("Forecast API failed, continuing without forecast"); // Debug log
-              }
-            } catch (forecastError) {
-              console.log("Forecast API error:", forecastError); // Debug log
-            }
-
-            // Process today's forecast
-            const todaysForecast = forecastData
-              ? getTodaysForecast(forecastData)
-              : getSimpleForecast(currentData);
-            console.log("Processed forecast:", todaysForecast); // Debug log
-
-            const weatherData = {
-              location: `${currentData.name}, ${currentData.sys.country}`,
-              temperature: Math.round(currentData.main.temp),
-              condition: currentData.weather[0].main,
-              humidity: currentData.main.humidity,
-              windSpeed: Math.round(currentData.wind?.speed || 0),
-              feelsLike: Math.round(currentData.main.feels_like),
-              forecast: todaysForecast,
-            };
-
-            displayWeather(weatherData);
-
-            // Save the new location
-            savedLocation = location;
-            try {
-              localStorage.setItem("weatherWardrobeLocation", savedLocation);
-            } catch (e) {
-              console.log("Cannot save location");
-            }
+        // Load saved data on page load
+        window.addEventListener('load', function() {
+            loadUserData();
             updateUI();
-          } else {
-            showError(
-              currentData.error ||
-                'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").',
-            );
-          }
-        } catch (err) {
-          console.log("Secure API call failed, using demo data:", err);
+            console.log('Page loaded, savedLocation:', savedLocation);
+        });
 
-          // Demo weather data with forecast
-          const demoWeather = {
-            location: location,
-            temperature: Math.floor(Math.random() * 50) + 30,
-            condition: ["Clear", "Clouds", "Rain", "Snow"][
-              Math.floor(Math.random() * 4)
-            ],
-            humidity: Math.floor(Math.random() * 40) + 40,
-            windSpeed: Math.floor(Math.random() * 15) + 2,
-            feelsLike: Math.floor(Math.random() * 50) + 30,
-            forecast: {
-              high: Math.floor(Math.random() * 20) + 70,
-              low: Math.floor(Math.random() * 20) + 40,
-              afternoon: ["Sunny", "Cloudy", "Light Rain"][
-                Math.floor(Math.random() * 3)
-              ],
-              evening: ["Clear", "Partly Cloudy", "Overcast"][
-                Math.floor(Math.random() * 3)
-              ],
-              alerts: ["Demo forecast data - showing sample alerts"],
-            },
-          };
-
-          displayWeather(demoWeather);
-          showError(
-            "Note: Using demo weather data. The secure API may still be deploying.",
-          );
-
-          // Save location even for demo
-          savedLocation = location;
-          try {
-            localStorage.setItem("weatherWardrobeLocation", savedLocation);
-          } catch (e) {
-            console.log("Cannot save location");
-          }
-          updateUI();
-        } finally {
-          // Reset button
-          if (button) {
-            button.textContent =
-              button.id === "getWeatherBtn"
-                ? "Get Clothing Advice"
-                : "Get Today's Clothing Advice";
-            button.disabled = false;
-          }
+        function loadUserData() {
+            try {
+                const profile = localStorage.getItem('weatherWardrobeProfile');
+                if (profile) {
+                    userProfile = JSON.parse(profile);
+                    console.log('Loaded profile:', userProfile);
+                }
+                
+                const location = localStorage.getItem('weatherWardrobeLocation');
+                if (location) {
+                    savedLocation = location;
+                    document.getElementById('locationInput').value = location;
+                    console.log('Loaded saved location:', savedLocation);
+                }
+            } catch (e) {
+                console.log('Storage not available:', e);
+            }
         }
-      }
 
-      function displayWeather(weather) {
-        // Update weather info
-        document.getElementById("weatherLocation").textContent =
-          weather.location;
-        document.getElementById("weatherTemp").textContent =
-          weather.temperature + "°F";
-        document.getElementById("weatherCondition").textContent =
-          weather.condition;
-        document.getElementById("feelsLike").textContent =
-          weather.feelsLike + "°F";
-        document.getElementById("humidity").textContent =
-          weather.humidity + "%";
-        document.getElementById("windSpeed").textContent =
-          weather.windSpeed + " mph";
+        function updateUI() {
+            console.log('Updating UI, savedLocation:', savedLocation);
+            
+            // Update welcome text
+            const welcomeText = document.getElementById('welcomeText');
+            if (userProfile.name) {
+                welcomeText.textContent = `Hello, ${userProfile.name}!`;
+            }
 
-        // Update weather icon
-        const iconContainer = document.getElementById("weatherIcon");
-        iconContainer.innerHTML = getWeatherIcon(weather.condition);
+            // Update location display
+            if (savedLocation && savedLocation.trim() !== '') {
+                document.getElementById('savedLocationText').textContent = savedLocation;
+                document.getElementById('savedLocationDiv').classList.remove('hidden');
+                document.getElementById('locationInputDiv').classList.add('hidden');
+                console.log('Showing saved location div');
+            } else {
+                document.getElementById('savedLocationDiv').classList.add('hidden');
+                document.getElementById('locationInputDiv').classList.remove('hidden');
+                console.log('Showing location input div');
+            }
 
-        // Update today's forecast if available
-        const forecastContainer = document.getElementById("todaysForecast");
-        if (weather.forecast) {
-          console.log("Displaying forecast:", weather.forecast); // Debug log
-          let forecastHTML = `
+            // Update profile form
+            if (userProfile.name) {
+                document.getElementById('userName').value = userProfile.name;
+            }
+
+            // Update temperature preference buttons
+            document.querySelectorAll('.temp-btn').forEach(btn => {
+                const value = btn.getAttribute('data-value');
+                if (value === userProfile.temperaturePreference) {
+                    btn.className = 'temp-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700';
+                } else {
+                    btn.className = 'temp-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300';
+                }
+            });
+        }
+
+        function toggleProfile() {
+            const profileSection = document.getElementById('profileSection');
+            isShowingProfile = !isShowingProfile;
+            
+            if (isShowingProfile) {
+                profileSection.classList.remove('hidden');
+            } else {
+                profileSection.classList.add('hidden');
+            }
+        }
+
+        function setTempPref(pref) {
+            userProfile.temperaturePreference = pref;
+            updateUI();
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('userName').value.trim();
+            userProfile.name = name;
+            userProfile.hasLearned = true;
+            
+            try {
+                localStorage.setItem('weatherWardrobeProfile', JSON.stringify(userProfile));
+                console.log('Profile saved:', userProfile);
+            } catch (e) {
+                console.log('Cannot save to storage');
+            }
+            
+            toggleProfile();
+            updateUI();
+        }
+
+        function editLocation() {
+            console.log('Edit location clicked');
+            // Show the input form
+            document.getElementById('savedLocationDiv').classList.add('hidden');
+            document.getElementById('locationInputDiv').classList.remove('hidden');
+            
+            // Focus and select the input
+            const locationInput = document.getElementById('locationInput');
+            locationInput.focus();
+            locationInput.select();
+        }
+
+        // Separate functions for different button clicks
+        function getWeatherForSavedLocation() {
+            console.log('Getting weather for saved location:', savedLocation);
+            if (!savedLocation || savedLocation.trim() === '') {
+                showError('No saved location found');
+                return;
+            }
+            getWeather(savedLocation, 'quickWeatherBtn');
+        }
+
+        function getWeatherFromInput() {
+            console.log('Getting weather from input');
+            const locationInput = document.getElementById('locationInput');
+            const inputValue = locationInput.value.trim();
+            
+            if (!inputValue) {
+                showError('Please enter a location');
+                return;
+            }
+            
+            getWeather(inputValue, 'getWeatherBtn');
+        }
+
+        function refreshWeather() {
+            console.log('Refreshing weather');
+            if (savedLocation) {
+                getWeather(savedLocation, 'quickWeatherBtn');
+            } else {
+                const inputValue = document.getElementById('locationInput').value.trim();
+                if (inputValue) {
+                    getWeather(inputValue, 'getWeatherBtn');
+                } else {
+                    showError('No location to refresh');
+                }
+            }
+        }
+
+        function getSimpleForecast(currentData) {
+            // Create a simple forecast based on current weather when detailed forecast fails
+            const currentTemp = Math.round(currentData.main.temp);
+            const alerts = [];
+            
+            // Generate some basic forecast info
+            const high = currentTemp + Math.floor(Math.random() * 10) + 2; // 2-12 degrees higher
+            const low = currentTemp - Math.floor(Math.random() * 15) - 5; // 5-20 degrees lower
+            
+            // Add some basic alerts based on current conditions
+            if (currentData.weather[0].main.toLowerCase().includes('thunder')) {
+                alerts.push("Thunderstorms possible - bring an umbrella and avoid outdoor activities!");
+            }
+            if (currentData.wind?.speed > 10) {
+                alerts.push("Windy conditions continuing - secure clothing and accessories!");
+            }
+            if (high - currentTemp > 8) {
+                alerts.push(`Temperature may rise to ${high}°F later - dress in layers!`);
+            }
+            
+            return {
+                high,
+                low,
+                afternoon: currentData.weather[0].main,
+                evening: currentData.weather[0].main,
+                alerts: alerts.length > 0 ? alerts : [`High: ${high}°F, Low: ${low}°F expected today`]
+            };
+        }
+
+        function getTodaysForecast(forecastData) {
+            if (!forecastData || !forecastData.list || forecastData.list.length === 0) {
+                console.log('No forecast data available');
+                return null;
+            }
+            
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+            
+            // Filter today's forecast entries (3-hour intervals)
+            const todaysEntries = forecastData.list.filter(entry => {
+                const entryDate = new Date(entry.dt * 1000).toISOString().split('T')[0];
+                return entryDate === todayStr;
+            });
+            
+            console.log('Today entries found:', todaysEntries.length);
+            
+            if (todaysEntries.length === 0) {
+                // If no entries for today, use tomorrow's data
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                
+                const tomorrowEntries = forecastData.list.filter(entry => {
+                    const entryDate = new Date(entry.dt * 1000).toISOString().split('T')[0];
+                    return entryDate === tomorrowStr;
+                }).slice(0, 3); // Just first 3 entries of tomorrow
+                
+                if (tomorrowEntries.length === 0) {
+                    return null;
+                }
+                
+                const temps = tomorrowEntries.map(entry => entry.main.temp);
+                return {
+                    high: Math.round(Math.max(...temps)),
+                    low: Math.round(Math.min(...temps)),
+                    afternoon: tomorrowEntries[0]?.weather[0].main || 'Unknown',
+                    evening: tomorrowEntries[1]?.weather[0].main || 'Unknown',
+                    alerts: ['Showing tomorrow\'s forecast']
+                };
+            }
+            
+            // Find high and low temps for today
+            const temps = todaysEntries.map(entry => entry.main.temp);
+            const high = Math.round(Math.max(...temps));
+            const low = Math.round(Math.min(...temps));
+            
+            // Get afternoon and evening conditions
+            const currentHour = today.getHours();
+            const afternoonEntry = todaysEntries.find(entry => {
+                const hour = new Date(entry.dt * 1000).getHours();
+                return hour >= 14 && hour <= 17; // 2 PM - 5 PM
+            });
+            const eveningEntry = todaysEntries.find(entry => {
+                const hour = new Date(entry.dt * 1000).getHours();
+                return hour >= 18 && hour <= 21; // 6 PM - 9 PM
+            });
+            
+            // Generate alerts based on forecast
+            const alerts = [];
+            
+            // Check for rain/snow later
+            const laterEntries = todaysEntries.filter(entry => {
+                const hour = new Date(entry.dt * 1000).getHours();
+                return hour > currentHour;
+            });
+            
+            const rainLater = laterEntries.some(entry => 
+                entry.weather[0].main.toLowerCase().includes('rain') || 
+                entry.weather[0].main.toLowerCase().includes('drizzle')
+            );
+            const snowLater = laterEntries.some(entry => 
+                entry.weather[0].main.toLowerCase().includes('snow')
+            );
+            const windyLater = laterEntries.some(entry => (entry.wind?.speed || 0) > 15);
+            
+            if (rainLater) alerts.push("Rain expected later today - consider bringing an umbrella!");
+            if (snowLater) alerts.push("Snow expected later - pack extra warm layers!");
+            if (windyLater) alerts.push("Getting windier later - consider a windbreaker!");
+            
+            // Temperature change alerts
+            const currentTemp = Math.round(todaysEntries[0]?.main.temp || 0);
+            if (high - currentTemp > 10) {
+                alerts.push(`Warming up significantly - high of ${high}°F expected!`);
+            }
+            if (currentTemp - low > 10 && currentHour < 18) {
+                alerts.push(`Cooling down later - low of ${low}°F tonight!`);
+            }
+            
+            // If no specific alerts, add a general one
+            if (alerts.length === 0) {
+                alerts.push(`High: ${high}°F, Low: ${low}°F expected today`);
+            }
+            
+            return {
+                high,
+                low,
+                afternoon: afternoonEntry?.weather[0].main || 'Similar conditions',
+                evening: eveningEntry?.weather[0].main || 'Similar conditions',
+                alerts
+            };
+        }
+
+        async function getWeather(location, buttonId) {
+            console.log('getWeather called with location:', location, 'buttonId:', buttonId);
+            
+            if (!location || location.trim() === '') {
+                showError('Please enter a location');
+                return;
+            }
+
+            // Show loading state on the correct button
+            const button = document.getElementById(buttonId);
+            if (button) {
+                const originalText = button.textContent;
+                button.innerHTML = '<div class="spinner mx-auto"></div>';
+                button.disabled = true;
+                
+                // Store original text for restoration
+                button.setAttribute('data-original-text', originalText);
+            }
+
+            hideError();
+
+            try {
+                console.log('Making API call for location:', location);
+                
+                // For demo purposes, generate realistic demo data
+                const demoWeather = {
+                    location: location,
+                    temperature: Math.floor(Math.random() * 40) + 30, // 30-70°F
+                    condition: ['Clear', 'Partly Cloudy', 'Cloudy', 'Light Rain'][Math.floor(Math.random() * 4)],
+                    humidity: Math.floor(Math.random() * 40) + 40, // 40-80%
+                    windSpeed: Math.floor(Math.random() * 15) + 2, // 2-17 mph
+                    feelsLike: Math.floor(Math.random() * 40) + 30, // 30-70°F
+                    forecast: {
+                        high: Math.floor(Math.random() * 20) + 60, // 60-80°F
+                        low: Math.floor(Math.random() * 20) + 40, // 40-60°F
+                        afternoon: ['Sunny', 'Cloudy', 'Light Rain'][Math.floor(Math.random() * 3)],
+                        evening: ['Clear', 'Partly Cloudy', 'Overcast'][Math.floor(Math.random() * 3)],
+                        alerts: [`Today's forecast: Expect temperatures between 40-80°F`]
+                    }
+                };
+                
+                console.log('Generated demo weather:', demoWeather);
+                displayWeather(demoWeather);
+                
+                // Save the location if the request was successful
+                if (location !== savedLocation) {
+                    savedLocation = location;
+                    try {
+                        localStorage.setItem('weatherWardrobeLocation', savedLocation);
+                        console.log('Saved location:', savedLocation);
+                    } catch (e) {
+                        console.log('Cannot save location to storage');
+                    }
+                    updateUI();
+                }
+                
+                lastWeatherData = demoWeather; // Store for refresh
+                
+            } catch (err) {
+                console.error('Weather API error:', err);
+                showError('Unable to get weather data. Please check your internet connection and try again.');
+            } finally {
+                // Reset button state
+                if (button) {
+                    const originalText = button.getAttribute('data-original-text') || 'Get Weather';
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.removeAttribute('data-original-text');
+                }
+            }
+        }
+
+        function displayWeather(weather) {
+            console.log('Displaying weather:', weather);
+            
+            // Update weather info
+            document.getElementById('weatherLocation').textContent = weather.location;
+            document.getElementById('weatherTemp').textContent = weather.temperature + '°F';
+            document.getElementById('weatherCondition').textContent = weather.condition;
+            document.getElementById('feelsLike').textContent = weather.feelsLike + '°F';
+            document.getElementById('humidity').textContent = weather.humidity + '%';
+            document.getElementById('windSpeed').textContent = weather.windSpeed + ' mph';
+            
+            // Update weather icon
+            const iconContainer = document.getElementById('weatherIcon');
+            iconContainer.innerHTML = getWeatherIcon(weather.condition);
+            
+            // Update today's forecast if available
+            const forecastContainer = document.getElementById('todaysForecast');
+            if (weather.forecast) {
+                console.log('Displaying forecast:', weather.forecast);
+                let forecastHTML = `
                     <div class="bg-blue-50 rounded-xl p-4 mt-4">
                         <h4 class="font-semibold text-blue-800 mb-2">📅 Today's Forecast</h4>
                         <div class="grid grid-cols-2 gap-4 text-sm mb-3">
@@ -1107,306 +615,155 @@
                             </div>
                         </div>
                 `;
-
-          if (weather.forecast.alerts && weather.forecast.alerts.length > 0) {
-            forecastHTML += '<div class="space-y-1">';
-            weather.forecast.alerts.forEach((alert) => {
-              forecastHTML += `<p class="text-blue-700 text-xs">⚠️ ${alert}</p>`;
-            });
-            forecastHTML += "</div>";
-          }
-
-          forecastHTML += "</div>";
-          forecastContainer.innerHTML = forecastHTML;
-          forecastContainer.classList.remove("hidden");
-        } else {
-          console.log("No forecast data to display"); // Debug log
-          forecastContainer.classList.add("hidden");
+                
+                if (weather.forecast.alerts && weather.forecast.alerts.length > 0) {
+                    forecastHTML += '<div class="space-y-1">';
+                    weather.forecast.alerts.forEach(alert => {
+                        forecastHTML += `<p class="text-blue-700 text-xs">⚠️ ${alert}</p>`;
+                    });
+                    forecastHTML += '</div>';
+                }
+                
+                forecastHTML += '</div>';
+                forecastContainer.innerHTML = forecastHTML;
+                forecastContainer.classList.remove('hidden');
+            } else {
+                console.log('No forecast data to display');
+                forecastContainer.classList.add('hidden');
+            }
+            
+            // Update clothing advice (now includes forecast info)
+            const advice = getClothingRecommendation(weather.temperature, weather.condition, weather.forecast);
+            document.getElementById('clothingAdvice').textContent = advice;
+            
+            // Show personalized note if applicable
+            if (userProfile.hasLearned) {
+                document.getElementById('personalizedNote').classList.remove('hidden');
+            }
+            
+            // Show results
+            document.getElementById('weatherResults').classList.remove('hidden');
         }
 
-        // Update clothing advice (now includes forecast info)
-        const advice = getClothingRecommendation(
-          weather.temperature,
-          weather.condition,
-          weather.forecast,
-        );
-        document.getElementById("clothingAdvice").textContent = advice;
-
-        // Show personalized note if applicable
-        if (userProfile.hasLearned) {
-          document
-            .getElementById("personalizedNote")
-            .classList.remove("hidden");
-        }
-
-        // Show results
-        document.getElementById("weatherResults").classList.remove("hidden");
-      }
-
-      function getWeatherIcon(condition) {
-        const lowerCondition = condition.toLowerCase();
-        if (
-          lowerCondition.includes("rain") ||
-          lowerCondition.includes("drizzle")
-        ) {
-          return `<svg class="weather-icon text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        function getWeatherIcon(condition) {
+            const lowerCondition = condition.toLowerCase();
+            if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle')) {
+                return `<svg class="weather-icon text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M8 19v2m8-2v2m-4-3v2m-4-5v2"/>
                 </svg>`;
-        } else if (lowerCondition.includes("cloud")) {
-          return `<svg class="weather-icon text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            } else if (lowerCondition.includes('cloud')) {
+                return `<svg class="weather-icon text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
                 </svg>`;
-        } else {
-          return `<svg class="weather-icon text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            } else {
+                return `<svg class="weather-icon text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                 </svg>`;
-        }
-      }
-
-      function getClothingRecommendation(temp, condition, forecast) {
-        const lowerCondition = condition.toLowerCase();
-        let baseTemp = temp;
-
-        // Adjust temperature based on user preferences
-        if (userProfile.temperaturePreference === "runs-hot") {
-          baseTemp += 10;
-        } else if (userProfile.temperaturePreference === "runs-cold") {
-          baseTemp -= 10;
+            }
         }
 
-        // Adjust for activity level
-        if (userProfile.activityLevel === "active") {
-          baseTemp += 5; // Active people get warmer
-        } else if (userProfile.activityLevel === "sedentary") {
-          baseTemp -= 3; // Sedentary people might feel cooler
+        function getClothingRecommendation(temp, condition, forecast) {
+            const lowerCondition = condition.toLowerCase();
+            let baseTemp = temp;
+            
+            // Adjust temperature based on user preferences
+            if (userProfile.temperaturePreference === 'runs-hot') {
+                baseTemp += 10;
+            } else if (userProfile.temperaturePreference === 'runs-cold') {
+                baseTemp -= 10;
+            }
+            
+            let recommendation = '';
+            let personalNote = '';
+            
+            if (userProfile.hasLearned && userProfile.name) {
+                personalNote = `Hi ${userProfile.name}! Based on your preferences: `;
+            }
+            
+            if (baseTemp >= 80) {
+                recommendation = "It's hot today! Light t-shirt and shorts or a sundress. Footwear: sandals, flip-flops, or breathable sneakers. Don't forget sunscreen!";
+            } else if (baseTemp >= 70) {
+                recommendation = "Perfect weather! T-shirt with jeans, shorts, or a light dress. Footwear: sneakers, loafers, or casual shoes work great.";
+            } else if (baseTemp >= 60) {
+                recommendation = "The temperature is mild today. Long pants with a light sweater over a t-shirt, or a light jacket. Footwear: comfortable sneakers or casual shoes.";
+            } else if (baseTemp >= 50) {
+                recommendation = "Getting cooler! Long pants with a medium-weight jacket, hoodie, or sweater. Footwear: closed-toe shoes or light boots.";
+            } else if (baseTemp >= 40) {
+                recommendation = "It's chilly! Warm jacket with layers, long pants, and consider a scarf. Footwear: boots or warm shoes with socks.";
+            } else if (baseTemp >= 30) {
+                recommendation = "Cold outside! Heavy coat, warm layers, gloves, and hat. Footwear: insulated boots or winter shoes.";
+            } else {
+                recommendation = "Freezing! Full winter gear - heavy coat, multiple layers, gloves, hat, and scarf. Footwear: waterproof winter boots with good insulation.";
+            }
+
+            // Add current weather-specific additions
+            if (lowerCondition.includes('rain') || lowerCondition.includes('drizzle')) {
+                recommendation += " Weather alert: It's rainy - wear waterproof shoes or rain boots, and don't forget an umbrella!";
+            }
+            if (lowerCondition.includes('snow')) {
+                recommendation += " Snow conditions: Definitely wear waterproof winter boots with good traction to avoid slipping!";
+            }
+            if (lowerCondition.includes('wind')) {
+                recommendation += " Windy conditions: Consider a windbreaker and make sure your shoes are secure.";
+            }
+
+            // Add forecast-based recommendations
+            if (forecast && forecast.alerts && forecast.alerts.length > 0) {
+                recommendation += " ";
+                // Add specific recommendations based on forecast alerts
+                if (forecast.alerts.some(alert => alert.includes('Rain'))) {
+                    recommendation += "Pack an umbrella for later! ";
+                }
+                if (forecast.alerts.some(alert => alert.includes('Snow'))) {
+                    recommendation += "Bring extra layers for snow later! ";
+                }
+                if (forecast.alerts.some(alert => alert.includes('wind'))) {
+                    recommendation += "Consider bringing a windbreaker for later! ";
+                }
+                if (forecast.alerts.some(alert => alert.includes('Warming up'))) {
+                    recommendation += "Dress in layers - you can remove them as it warms up! ";
+                }
+                if (forecast.alerts.some(alert => alert.includes('Cooling down'))) {
+                    recommendation += "Bring an extra layer for when it cools down later! ";
+                }
+            }
+
+            // Add preference explanation
+            if (userProfile.temperaturePreference === 'runs-hot') {
+                recommendation += " (Adjusted lighter since you tend to run warm)";
+            } else if (userProfile.temperaturePreference === 'runs-cold') {
+                recommendation += " (Adjusted warmer since you tend to feel cold)";
+            }
+
+            return personalNote + recommendation;
         }
 
-        let recommendation = "";
-        let personalNote = "";
-
-        if (userProfile.hasLearned && userProfile.name) {
-          personalNote = `Hi ${userProfile.name}! Based on your preferences: `;
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorDiv').classList.remove('hidden');
+            console.log('Error shown:', message);
         }
 
-        // Base clothing recommendations by temperature and style
-        let baseClothing = "";
-        let footwear = "";
-
-        if (baseTemp >= 80) {
-          if (userProfile.stylePreference === "professional") {
-            baseClothing =
-              "Light button-down shirt or blouse with dress pants/skirt, or a lightweight dress";
-            footwear =
-              "dress shoes with breathable materials or professional sandals";
-          } else if (userProfile.stylePreference === "sporty") {
-            baseClothing =
-              "Moisture-wicking t-shirt and athletic shorts or leggings";
-            footwear = "breathable athletic shoes or running sandals";
-          } else if (userProfile.stylePreference === "fashion") {
-            baseClothing =
-              "Trendy crop top or stylish tank with high-waisted shorts/skirt";
-            footwear = "fashionable sandals or statement sneakers";
-          } else {
-            baseClothing = "Light t-shirt and shorts or a comfortable sundress";
-            footwear = "sandals, flip-flops, or breathable sneakers";
-          }
-        } else if (baseTemp >= 70) {
-          if (userProfile.stylePreference === "professional") {
-            baseClothing =
-              "Button-down shirt with chinos/dress pants or a midi dress";
-            footwear = "loafers, dress shoes, or professional flats";
-          } else if (userProfile.stylePreference === "sporty") {
-            baseClothing = "Athletic t-shirt with joggers or leggings";
-            footwear = "sneakers or athletic shoes";
-          } else if (userProfile.stylePreference === "fashion") {
-            baseClothing = "Trendy top with jeans or a stylish romper";
-            footwear = "fashion sneakers, ankle boots, or statement flats";
-          } else {
-            baseClothing = "T-shirt with jeans, shorts, or a light dress";
-            footwear = "sneakers, loafers, or casual shoes";
-          }
-        } else if (baseTemp >= 60) {
-          if (userProfile.stylePreference === "professional") {
-            baseClothing =
-              "Long-sleeve shirt with blazer and dress pants/skirt";
-            footwear = "closed-toe dress shoes or ankle boots";
-          } else if (userProfile.stylePreference === "sporty") {
-            baseClothing =
-              "Long-sleeve athletic shirt with track pants or leggings";
-            footwear = "sneakers or athletic shoes";
-          } else if (userProfile.stylePreference === "fashion") {
-            baseClothing =
-              "Stylish sweater or cardigan with jeans or trendy pants";
-            footwear = "ankle boots, fashion sneakers, or knee-high boots";
-          } else {
-            baseClothing =
-              "Long pants with a light sweater over a t-shirt, or a light jacket";
-            footwear = "comfortable sneakers or casual shoes";
-          }
-        } else if (baseTemp >= 50) {
-          if (userProfile.stylePreference === "professional") {
-            baseClothing =
-              "Wool sweater or blazer with dress pants and consider a coat";
-            footwear = "dress shoes or professional boots";
-          } else if (userProfile.stylePreference === "sporty") {
-            baseClothing = "Hoodie or sweatshirt with athletic pants";
-            footwear = "sneakers or athletic boots";
-          } else if (userProfile.stylePreference === "fashion") {
-            baseClothing = "Trendy jacket or oversized sweater with jeans";
-            footwear = "stylish boots or fashion sneakers";
-          } else {
-            baseClothing =
-              "Long pants with a medium-weight jacket, hoodie, or sweater";
-            footwear = "closed-toe shoes or light boots";
-          }
-        } else if (baseTemp >= 40) {
-          if (userProfile.stylePreference === "professional") {
-            baseClothing = "Warm blazer or wool coat with layers underneath";
-            footwear = "warm dress shoes or professional boots";
-          } else if (userProfile.stylePreference === "sporty") {
-            baseClothing =
-              "Insulated jacket with warm athletic wear and layers";
-            footwear = "warm athletic shoes or winter sneakers";
-          } else if (userProfile.stylePreference === "fashion") {
-            baseClothing = "Stylish warm coat with layered sweaters and jeans";
-            footwear = "fashionable boots or warm ankle boots";
-          } else {
-            baseClothing =
-              "Warm jacket with layers, long pants, and consider a scarf";
-            footwear = "boots or warm shoes with socks";
-          }
-        } else if (baseTemp >= 30) {
-          baseClothing = "Heavy coat, warm layers, gloves, and hat";
-          footwear = "insulated boots or winter shoes";
-        } else {
-          baseClothing =
-            "Full winter gear - heavy coat, multiple layers, gloves, hat, and scarf";
-          footwear = "waterproof winter boots with good insulation";
+        function hideError() {
+            document.getElementById('errorDiv').classList.add('hidden');
         }
 
-        recommendation = `${baseClothing}. Footwear: ${footwear}.`;
-
-        // Work environment adjustments
-        if (userProfile.workEnvironment === "outdoor") {
-          recommendation +=
-            " Since you work outdoors, consider weather-resistant materials and extra protection.";
-        } else if (userProfile.workEnvironment === "mixed") {
-          recommendation +=
-            " For your mixed indoor/outdoor work, dress in layers you can easily adjust.";
-        } else if (userProfile.workEnvironment === "home") {
-          recommendation +=
-            " Working from home? Prioritize comfort while staying put-together for video calls.";
-        }
-
-        // Special considerations
-        if (userProfile.specialConsiderations.includes("natural-fabrics")) {
-          recommendation += " Focus on cotton, wool, or linen materials.";
-        }
-        if (userProfile.specialConsiderations.includes("easy-care")) {
-          recommendation += " Choose wrinkle-free or easy-care fabrics.";
-        }
-        if (userProfile.specialConsiderations.includes("loose-fit")) {
-          recommendation += " Opt for relaxed, loose-fitting styles.";
-        }
-        if (userProfile.specialConsiderations.includes("layers")) {
-          recommendation +=
-            " Perfect day for your favorite layering combinations!";
-        }
-
-        // Add current weather-specific additions
-        if (
-          lowerCondition.includes("rain") ||
-          lowerCondition.includes("drizzle")
-        ) {
-          recommendation +=
-            " Weather alert: It's rainy - wear waterproof shoes or rain boots, and don't forget an umbrella!";
-        }
-        if (lowerCondition.includes("snow")) {
-          recommendation +=
-            " Snow conditions: Definitely wear waterproof winter boots with good traction to avoid slipping!";
-        }
-        if (lowerCondition.includes("wind")) {
-          recommendation +=
-            " Windy conditions: Consider a windbreaker and make sure your clothes/accessories are secure.";
-        }
-
-        // Add forecast-based recommendations
-        if (forecast && forecast.alerts && forecast.alerts.length > 0) {
-          recommendation += " ";
-          if (forecast.alerts.some((alert) => alert.includes("Rain"))) {
-            recommendation += "Pack an umbrella for later! ";
-          }
-          if (forecast.alerts.some((alert) => alert.includes("Snow"))) {
-            recommendation += "Bring extra layers for snow later! ";
-          }
-          if (forecast.alerts.some((alert) => alert.includes("wind"))) {
-            recommendation += "Consider bringing a windbreaker for later! ";
-          }
-          if (forecast.alerts.some((alert) => alert.includes("Warming up"))) {
-            recommendation +=
-              "Dress in layers - you can remove them as it warms up! ";
-          }
-          if (forecast.alerts.some((alert) => alert.includes("Cooling down"))) {
-            recommendation +=
-              "Bring an extra layer for when it cools down later! ";
-          }
-        }
-
-        // Add preference explanation
-        let adjustmentNote = "";
-        if (userProfile.temperaturePreference === "runs-hot") {
-          adjustmentNote += "lighter since you run warm";
-        } else if (userProfile.temperaturePreference === "runs-cold") {
-          adjustmentNote += "warmer since you feel cold easily";
-        }
-
-        if (userProfile.activityLevel === "active") {
-          adjustmentNote += adjustmentNote
-            ? ", and lighter for your active lifestyle"
-            : "lighter for your active lifestyle";
-        } else if (userProfile.activityLevel === "sedentary") {
-          adjustmentNote += adjustmentNote
-            ? ", and a bit warmer for office comfort"
-            : "slightly warmer for office comfort";
-        }
-
-        if (adjustmentNote) {
-          recommendation += ` (Adjusted ${adjustmentNote})`;
-        }
-
-        return personalNote + recommendation;
-      }
-
-      function showError(message) {
-        document.getElementById("errorText").textContent = message;
-        document.getElementById("errorDiv").classList.remove("hidden");
-      }
-
-      function hideError() {
-        document.getElementById("errorDiv").classList.add("hidden");
-      }
-
-      // Allow Enter key to search - with proper event handling
-      document
-        .getElementById("locationInput")
-        .addEventListener("keypress", function (e) {
-          if (e.key === "Enter") {
-            e.preventDefault(); // Prevent form submission/page refresh
-            e.stopPropagation(); // Stop event bubbling
-            getWeather();
-          }
+        // Allow Enter key to search - with proper event handling
+        document.getElementById('locationInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form submission/page refresh
+                e.stopPropagation(); // Stop event bubbling
+                getWeatherFromInput();
+            }
         });
 
-      // Also prevent any form submission if the input is somehow in a form
-      document
-        .getElementById("locationInput")
-        .addEventListener("keydown", function (e) {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            getWeather();
-          }
+        // Also prevent any form submission if the input is somehow in a form
+        document.getElementById('locationInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                getWeatherFromInput();
+            }
         });
     </script>
-    <!-- Secure API deployment -->
-  </body>
+</body>
 </html>

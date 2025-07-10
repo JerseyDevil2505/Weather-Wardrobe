@@ -823,6 +823,10 @@
           const profile = localStorage.getItem("weatherWardrobeProfile");
           if (profile) {
             userProfile = JSON.parse(profile);
+            // Ensure specialConsiderations is always an array
+            if (!Array.isArray(userProfile.specialConsiderations)) {
+              userProfile.specialConsiderations = [];
+            }
           }
 
           const location = localStorage.getItem("weatherWardrobeLocation");
@@ -916,7 +920,9 @@
         // Update special considerations checkboxes
         document.querySelectorAll(".special-checkbox").forEach((checkbox) => {
           const value = checkbox.value;
-          checkbox.checked = userProfile.specialConsiderations.includes(value);
+          checkbox.checked =
+            userProfile.specialConsiderations &&
+            userProfile.specialConsiderations.includes(value);
         });
       }
 
@@ -1534,22 +1540,39 @@
         loadingDiv.classList.remove("hidden");
         suggestionsContainer.classList.remove("hidden");
 
+        console.log("Searching locations for query:", query);
+
         try {
-          // Use OpenWeather Geocoding API
-          const response = await fetch(
-            `/api/geocoding?q=${encodeURIComponent(query)}&limit=8`,
-          );
+          // Use OpenWeather Geocoding API with more results
+          const apiUrl = `/api/geocoding?q=${encodeURIComponent(query)}&limit=10`;
+          console.log("Calling geocoding API:", apiUrl);
+
+          const response = await fetch(apiUrl);
+          console.log("Geocoding API response status:", response.status);
+          console.log("Geocoding API response headers:", response.headers);
 
           if (response.ok) {
             const locations = await response.json();
-            displayLocationSuggestions(locations);
+            console.log("Geocoding API returned locations:", locations);
+            console.log("Number of locations found:", locations.length);
+
+            if (locations && locations.length > 0) {
+              displayLocationSuggestions(locations);
+            } else {
+              console.log("API returned empty results");
+              suggestionsList.innerHTML =
+                '<div class="px-4 py-2 text-sm text-gray-500">No locations found for this search</div>';
+            }
           } else {
-            // Fallback to demo suggestions
-            displayDemoSuggestions(query);
+            const errorData = await response
+              .json()
+              .catch(() => ({ error: "Unknown error" }));
+            console.log("Geocoding API error:", errorData);
+            suggestionsList.innerHTML = `<div class="px-4 py-2 text-sm text-gray-500">Search service error: ${errorData.error || "Unknown error"}</div>`;
           }
         } catch (error) {
-          console.log("Geocoding API failed, using demo suggestions:", error);
-          displayDemoSuggestions(query);
+          console.log("Geocoding API network error:", error);
+          suggestionsList.innerHTML = `<div class="px-4 py-2 text-sm text-gray-500">Network error: ${error.message}</div>`;
         }
 
         loadingDiv.classList.add("hidden");
@@ -1585,8 +1608,9 @@
         suggestionsContainer.classList.remove("hidden");
       }
 
+      // Demo suggestions function removed - using OpenWeather Geocoding API exclusively
       function displayDemoSuggestions(query) {
-        // Demo suggestions for common US cities
+        // This function is deprecated - OpenWeather API should be used instead
         const demoSuggestions = [
           {
             name: "New York",
@@ -1952,14 +1976,70 @@
             lat: 40.0368,
             lon: -74.9632,
           },
+          {
+            name: "Daytona Beach",
+            state: "FL",
+            country: "US",
+            lat: 29.2108,
+            lon: -81.0228,
+          },
+          {
+            name: "Dayton",
+            state: "OH",
+            country: "US",
+            lat: 39.7589,
+            lon: -84.1916,
+          },
+          {
+            name: "Danbury",
+            state: "CT",
+            country: "US",
+            lat: 41.3948,
+            lon: -73.454,
+          },
+          {
+            name: "Danville",
+            state: "VA",
+            country: "US",
+            lat: 36.586,
+            lon: -79.395,
+          },
+          {
+            name: "Daly City",
+            state: "CA",
+            country: "US",
+            lat: 37.7058,
+            lon: -122.4619,
+          },
         ];
 
+        // Filter for any partial match in city name
         const filtered = demoSuggestions
-          .filter((city) =>
-            city.name.toLowerCase().includes(query.toLowerCase()),
-          )
-          .slice(0, 8);
+          .filter((city) => {
+            const cityName = city.name.toLowerCase();
+            const queryLower = query.toLowerCase();
+            return (
+              cityName.startsWith(queryLower) || cityName.includes(queryLower)
+            );
+          })
+          .sort((a, b) => {
+            // Prioritize cities that start with the query
+            const aStarts = a.name
+              .toLowerCase()
+              .startsWith(query.toLowerCase());
+            const bStarts = b.name
+              .toLowerCase()
+              .startsWith(query.toLowerCase());
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+            return a.name.localeCompare(b.name);
+          })
+          .slice(0, 10); // Show more results
 
+        console.log(
+          `Demo suggestions for "${query}":`,
+          filtered.map((c) => c.name),
+        );
         displayLocationSuggestions(filtered);
       }
 

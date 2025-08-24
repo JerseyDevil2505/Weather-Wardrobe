@@ -156,6 +156,38 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Unit Preference</label
+              >
+              <div class="grid grid-cols-3 gap-2" id="unitPrefs">
+                <button
+                  onclick="setUnitPref('auto')"
+                  class="unit-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700"
+                  data-value="auto"
+                >
+                  <div class="text-lg font-bold">Auto</div>
+                  <div class="text-gray-500 text-xs">Based on location</div>
+                </button>
+                <button
+                  onclick="setUnitPref('imperial')"
+                  class="unit-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
+                  data-value="imperial"
+                >
+                  <div class="text-lg font-bold">°F, mph</div>
+                  <div class="text-gray-500 text-xs">Imperial</div>
+                </button>
+                <button
+                  onclick="setUnitPref('metric')"
+                  class="unit-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300"
+                  data-value="metric"
+                >
+                  <div class="text-lg font-bold">°C, km/h</div>
+                  <div class="text-gray-500 text-xs">Metric</div>
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
                 >Temperature Preference</label
               >
               <div class="grid grid-cols-3 gap-2" id="tempPrefs">
@@ -807,10 +839,13 @@
         stylePreference: "casual",
         workEnvironment: "indoor",
         specialConsiderations: [],
+        unitPreference: "auto", // auto, imperial, metric
         hasLearned: false,
       };
       let savedLocation = "";
       let isShowingProfile = false;
+      let currentUnits = "imperial"; // imperial or metric
+      let currentCountry = null;
 
       // Load saved data on page load
       window.addEventListener("load", function () {
@@ -827,6 +862,10 @@
             if (!Array.isArray(userProfile.specialConsiderations)) {
               userProfile.specialConsiderations = [];
             }
+            // Ensure unitPreference has a default value
+            if (!userProfile.unitPreference) {
+              userProfile.unitPreference = "auto";
+            }
           }
 
           const location = localStorage.getItem("weatherWardrobeLocation");
@@ -837,6 +876,56 @@
         } catch (e) {
           console.log("Storage not available");
         }
+      }
+
+      // Unit detection based on country and user preference
+      function detectUnits(country) {
+        // Check user preference first
+        if (userProfile.unitPreference === 'imperial') {
+          return 'imperial';
+        } else if (userProfile.unitPreference === 'metric') {
+          return 'metric';
+        }
+
+        // Auto mode: detect based on country
+        // Imperial countries: US, Liberia, Myanmar (Burma)
+        const imperialCountries = ['US', 'LR', 'MM'];
+        return imperialCountries.includes(country) ? 'imperial' : 'metric';
+      }
+
+      // Refresh weather display with new units
+      function refreshWeatherWithNewUnits() {
+        const locationInput = document.getElementById("locationInput");
+        const currentLocation = locationInput.value.trim() || savedLocation;
+
+        if (currentLocation) {
+          console.log("Refreshing weather with new units:", userProfile.unitPreference, "currentUnits:", currentUnits);
+          getWeather();
+        }
+      }
+
+      // Temperature conversion functions
+      function fahrenheitToCelsius(fahrenheit) {
+        return (fahrenheit - 32) * 5/9;
+      }
+
+      function celsiusToFahrenheit(celsius) {
+        return (celsius * 9/5) + 32;
+      }
+
+      // Wind speed conversion functions
+      function mphToKmh(mph) {
+        return mph * 1.60934;
+      }
+
+      function formatTemperature(temp, units = currentUnits) {
+        const rounded = Math.round(temp);
+        return units === 'metric' ? `${rounded}°C` : `${rounded}°F`;
+      }
+
+      function formatWindSpeed(speed, units = currentUnits) {
+        const rounded = Math.round(speed);
+        return units === 'metric' ? `${rounded} km/h` : `${rounded} mph`;
       }
 
       function updateUI() {
@@ -917,6 +1006,18 @@
           }
         });
 
+        // Update unit preference buttons
+        document.querySelectorAll(".unit-btn").forEach((btn) => {
+          const value = btn.getAttribute("data-value");
+          if (value === userProfile.unitPreference) {
+            btn.className =
+              "unit-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700";
+          } else {
+            btn.className =
+              "unit-btn p-3 text-xs border rounded-lg transition-all bg-white border-gray-300 text-gray-700 hover:border-blue-300";
+          }
+        });
+
         // Update special considerations checkboxes
         document.querySelectorAll(".special-checkbox").forEach((checkbox) => {
           const value = checkbox.value;
@@ -955,6 +1056,25 @@
       function setWorkEnv(env) {
         userProfile.workEnvironment = env;
         updateUI();
+      }
+
+      function setUnitPref(unit) {
+        userProfile.unitPreference = unit;
+
+        // Immediately update current units if not auto
+        if (unit !== 'auto') {
+          currentUnits = unit;
+        } else if (currentCountry) {
+          currentUnits = detectUnits(currentCountry);
+        }
+
+        console.log("Unit preference changed to:", unit, "currentUnits now:", currentUnits);
+        updateUI();
+
+        // If weather is currently displayed, refresh with new units
+        if (!document.getElementById("weatherResults").classList.contains("hidden")) {
+          refreshWeatherWithNewUnits();
+        }
       }
 
       function toggleSpecialConsideration(consideration) {
@@ -1218,10 +1338,20 @@
           // Use secure serverless function instead of direct API calls
           console.log("Using secure API for:", location); // Debug log
 
-          // Get current weather through secure API
+          // Detect units based on selected location or default to imperial
+          let detectedUnits = 'imperial';
+          if (selectedLocation && selectedLocation.country) {
+            detectedUnits = detectUnits(selectedLocation.country);
+            currentCountry = selectedLocation.country;
+          }
+          currentUnits = detectedUnits;
+
+          console.log("Using units:", currentUnits, "for country:", currentCountry);
+
+          // Get current weather through secure API with appropriate units
           const currentUrl = useCoordinates
-            ? `/api/weather?${enhancedLocation}&type=current`
-            : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=current`;
+            ? `/api/weather?${enhancedLocation}&type=current&units=${currentUnits}`
+            : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=current&units=${currentUnits}`;
 
           const currentResponse = await fetch(currentUrl);
 
@@ -1233,8 +1363,8 @@
             let forecastData = null;
             try {
               const forecastUrl = useCoordinates
-                ? `/api/weather?${enhancedLocation}&type=forecast`
-                : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=forecast`;
+                ? `/api/weather?${enhancedLocation}&type=forecast&units=${currentUnits}`
+                : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=forecast&units=${currentUnits}`;
 
               const forecastResponse = await fetch(forecastUrl);
 
@@ -1256,6 +1386,19 @@
               ? getTodaysForecast(forecastData)
               : getSimpleForecast(currentData);
             console.log("Processed forecast:", todaysForecast); // Debug log
+
+            // Detect country and units from API response if not already set
+            if (currentData.sys && currentData.sys.country) {
+              const apiCountry = currentData.sys.country;
+              if (!currentCountry || currentCountry !== apiCountry) {
+                currentCountry = apiCountry;
+                const newUnits = detectUnits(apiCountry);
+                if (newUnits !== currentUnits) {
+                  currentUnits = newUnits;
+                  console.log("Updated units based on API response:", currentUnits, "for country:", currentCountry);
+                }
+              }
+            }
 
             // Use preferred location name from autocomplete or format from API response
             let locationDisplay;
@@ -1309,25 +1452,47 @@
             demoLocationName = "Demo City";
           }
 
+          // Generate demo weather in appropriate units
+          // Update currentUnits based on user preference for demo data
+          if (userProfile.unitPreference !== 'auto') {
+            currentUnits = userProfile.unitPreference;
+          }
+
+          let demoTemp, demoFeelsLike, demoHigh, demoLow, demoWind;
+          console.log("Demo data using units:", currentUnits, "based on preference:", userProfile.unitPreference);
+          if (currentUnits === 'metric') {
+            demoTemp = Math.floor(Math.random() * 30) + 0; // 0-30°C
+            demoFeelsLike = Math.floor(Math.random() * 30) + 0;
+            demoHigh = Math.floor(Math.random() * 15) + 20; // 20-35°C
+            demoLow = Math.floor(Math.random() * 15) + 5; // 5-20°C
+            demoWind = Math.floor(Math.random() * 25) + 5; // 5-30 km/h
+          } else {
+            demoTemp = Math.floor(Math.random() * 50) + 30; // 30-80°F
+            demoFeelsLike = Math.floor(Math.random() * 50) + 30;
+            demoHigh = Math.floor(Math.random() * 20) + 70; // 70-90°F
+            demoLow = Math.floor(Math.random() * 20) + 40; // 40-60°F
+            demoWind = Math.floor(Math.random() * 15) + 2; // 2-17 mph
+          }
+
           const demoWeather = {
             location: demoLocationName,
-            temperature: Math.floor(Math.random() * 50) + 30,
+            temperature: demoTemp,
             condition: ["Clear", "Clouds", "Rain", "Snow"][
               Math.floor(Math.random() * 4)
             ],
             humidity: Math.floor(Math.random() * 40) + 40,
-            windSpeed: Math.floor(Math.random() * 15) + 2,
-            feelsLike: Math.floor(Math.random() * 50) + 30,
+            windSpeed: demoWind,
+            feelsLike: demoFeelsLike,
             forecast: {
-              high: Math.floor(Math.random() * 20) + 70,
-              low: Math.floor(Math.random() * 20) + 40,
+              high: demoHigh,
+              low: demoLow,
               afternoon: ["Sunny", "Cloudy", "Light Rain"][
                 Math.floor(Math.random() * 3)
               ],
               evening: ["Clear", "Partly Cloudy", "Overcast"][
                 Math.floor(Math.random() * 3)
               ],
-              alerts: ["Demo forecast data - showing sample alerts"],
+              alerts: [`Demo forecast data - units: ${currentUnits}`],
             },
           };
 
@@ -1354,19 +1519,19 @@
       }
 
       function displayWeather(weather) {
-        // Update weather info
+        // Update weather info with dynamic units
         document.getElementById("weatherLocation").textContent =
           weather.location;
         document.getElementById("weatherTemp").textContent =
-          weather.temperature + "°F";
+          formatTemperature(weather.temperature);
         document.getElementById("weatherCondition").textContent =
           weather.condition;
         document.getElementById("feelsLike").textContent =
-          weather.feelsLike + "°F";
+          formatTemperature(weather.feelsLike);
         document.getElementById("humidity").textContent =
           weather.humidity + "%";
         document.getElementById("windSpeed").textContent =
-          weather.windSpeed + " mph";
+          formatWindSpeed(weather.windSpeed);
 
         // Update weather icon
         const iconContainer = document.getElementById("weatherIcon");
@@ -1382,11 +1547,11 @@
                         <div class="grid grid-cols-2 gap-4 text-sm mb-3">
                             <div class="text-center">
                                 <p class="text-blue-600">High</p>
-                                <p class="font-bold text-blue-800">${weather.forecast.high}°F</p>
+                                <p class="font-bold text-blue-800">${formatTemperature(weather.forecast.high)}</p>
                             </div>
                             <div class="text-center">
                                 <p class="text-blue-600">Low</p>
-                                <p class="font-bold text-blue-800">${weather.forecast.low}°F</p>
+                                <p class="font-bold text-blue-800">${formatTemperature(weather.forecast.low)}</p>
                             </div>
                         </div>
                 `;
@@ -1581,6 +1746,12 @@
               suggestionsList.innerHTML =
                 '<div class="px-4 py-2 text-sm text-gray-500">No locations found for this search</div>';
             }
+          } else if (response.status === 404) {
+            console.log(
+              "Geocoding API not deployed - using zip code only mode",
+            );
+            suggestionsList.innerHTML =
+              '<div class="px-4 py-2 text-sm text-gray-500">City search temporarily unavailable - try zip codes</div>';
           } else {
             const errorData = await response
               .json()
@@ -2166,8 +2337,15 @@
           alerts: [],
         };
 
-        // Upper Body Recommendations
-        if (baseTemp >= 80) {
+        // Normalize temperature to Fahrenheit for consistent thresholds
+        // If we're using metric, the API returns Celsius, so convert to Fahrenheit for clothing logic
+        let tempForClothing = baseTemp;
+        if (currentUnits === 'metric') {
+          tempForClothing = celsiusToFahrenheit(baseTemp);
+        }
+
+        // Upper Body Recommendations (using Fahrenheit thresholds)
+        if (tempForClothing >= 80) {
           if (style === "professional") {
             recommendations.top =
               "Lightweight button-down, breathable blouse, or linen shirt";
@@ -2181,7 +2359,7 @@
             recommendations.top =
               "Light cotton t-shirt, tank top, or sleeveless top";
           }
-        } else if (baseTemp >= 70) {
+        } else if (tempForClothing >= 70) {
           if (style === "professional") {
             recommendations.top =
               "Cotton button-down, polo shirt, or lightweight blouse";
@@ -2195,7 +2373,7 @@
             recommendations.top =
               "Comfortable t-shirt, casual button-down, or light sweater";
           }
-        } else if (baseTemp >= 60) {
+        } else if (tempForClothing >= 60) {
           if (style === "professional") {
             recommendations.top =
               "Long-sleeve shirt with light blazer or cardigan";
@@ -2209,7 +2387,7 @@
             recommendations.top =
               "Long-sleeve shirt, light sweater, or thin hoodie";
           }
-        } else if (baseTemp >= 50) {
+        } else if (tempForClothing >= 50) {
           if (style === "professional") {
             recommendations.top =
               "Wool sweater, thick blazer, or professional cardigan";
@@ -2223,9 +2401,9 @@
             recommendations.top =
               "Medium-weight sweater, hoodie, or casual jacket";
           }
-        } else if (baseTemp >= 40) {
+        } else if (tempForClothing >= 40) {
           recommendations.top = "Warm sweater or fleece with insulating layers";
-        } else if (baseTemp >= 30) {
+        } else if (tempForClothing >= 30) {
           recommendations.top =
             "Heavy sweater, thermal base layer, and warm coat";
         } else {
@@ -2248,7 +2426,7 @@
             recommendations.bottom =
               "Shorts, lightweight pants, or summer dress";
           }
-        } else if (baseTemp >= 70) {
+        } else if (tempForClothing >= 70) {
           if (style === "professional") {
             recommendations.bottom =
               "Dress pants, midi skirt, or tailored trousers";
@@ -2261,7 +2439,7 @@
             recommendations.bottom =
               "Jeans, casual pants, or comfortable skirt";
           }
-        } else if (baseTemp >= 50) {
+        } else if (tempForClothing >= 50) {
           if (style === "professional") {
             recommendations.bottom =
               "Wool pants, warm skirt with tights, or dress slacks";
@@ -2271,7 +2449,7 @@
           } else {
             recommendations.bottom = "Jeans, warm pants, or thick leggings";
           }
-        } else if (baseTemp >= 30) {
+        } else if (tempForClothing >= 30) {
           recommendations.bottom =
             "Insulated pants, thermal leggings, or winter trousers";
         } else {
@@ -2294,7 +2472,7 @@
             recommendations.footwear =
               "Sandals, flip-flops, or breathable sneakers";
           }
-        } else if (baseTemp >= 70) {
+        } else if (tempForClothing >= 70) {
           if (style === "professional") {
             recommendations.footwear =
               "Dress shoes, professional flats, or loafers";
@@ -2305,7 +2483,7 @@
             recommendations.footwear =
               "Comfortable shoes, casual sneakers, or flats";
           }
-        } else if (baseTemp >= 50) {
+        } else if (tempForClothing >= 50) {
           if (style === "professional") {
             recommendations.footwear =
               "Closed-toe dress shoes or professional ankle boots";
@@ -2313,7 +2491,7 @@
             recommendations.footwear =
               "Sneakers, boots, or warm closed-toe shoes";
           }
-        } else if (baseTemp >= 30) {
+        } else if (tempForClothing >= 30) {
           recommendations.footwear =
             "Insulated boots or warm winter shoes with good traction";
         } else {
@@ -2324,16 +2502,16 @@
         // Accessories Recommendations
         if (baseTemp >= 80) {
           recommendations.accessories = "Sunglasses, sun hat, and sunscreen";
-        } else if (baseTemp >= 70) {
+        } else if (tempForClothing >= 70) {
           recommendations.accessories =
             "Light accessories, sunglasses if sunny";
-        } else if (baseTemp >= 60) {
+        } else if (tempForClothing >= 60) {
           recommendations.accessories = "Light scarf or jacket you can remove";
-        } else if (baseTemp >= 50) {
+        } else if (tempForClothing >= 50) {
           recommendations.accessories = "Scarf, light gloves, or warm hat";
-        } else if (baseTemp >= 40) {
+        } else if (tempForClothing >= 40) {
           recommendations.accessories = "Warm scarf, gloves, and beanie or hat";
-        } else if (baseTemp >= 30) {
+        } else if (tempForClothing >= 30) {
           recommendations.accessories =
             "Insulated gloves, warm hat, thick scarf";
         } else {

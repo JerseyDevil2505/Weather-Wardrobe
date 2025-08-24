@@ -1393,15 +1393,21 @@
               : getSimpleForecast(currentData);
             console.log("Processed forecast:", todaysForecast); // Debug log
 
-            // Detect country and units from API response if not already set
+            // Store country info but don't override manual unit preference
             if (currentData.sys && currentData.sys.country) {
               const apiCountry = currentData.sys.country;
               if (!currentCountry || currentCountry !== apiCountry) {
                 currentCountry = apiCountry;
-                const newUnits = detectUnits(apiCountry);
-                if (newUnits !== currentUnits) {
-                  currentUnits = newUnits;
-                  console.log("Updated units based on API response:", currentUnits, "for country:", currentCountry);
+
+                // Only auto-detect units if user preference is set to "auto"
+                if (userProfile.unitPreference === 'auto') {
+                  const newUnits = detectUnits(apiCountry);
+                  if (newUnits !== currentUnits) {
+                    currentUnits = newUnits;
+                    console.log("Auto-detected units based on API response:", currentUnits, "for country:", currentCountry);
+                  }
+                } else {
+                  console.log("Keeping manual unit preference:", currentUnits, "for country:", currentCountry);
                 }
               }
             }

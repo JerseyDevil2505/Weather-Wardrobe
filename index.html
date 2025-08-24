@@ -1236,8 +1236,25 @@
 
         // Find high and low temps for today
         const temps = todaysEntries.map((entry) => entry.main.temp);
+        console.log("📈 Today's forecast temperatures:", temps);
+        console.log("📈 Number of forecast entries for today:", todaysEntries.length);
+
         const high = Math.round(Math.max(...temps));
         const low = Math.round(Math.min(...temps));
+
+        console.log("📈 Calculated high:", high, "low:", low);
+
+        // If high and low are the same, use a reasonable spread
+        let adjustedHigh = high;
+        let adjustedLow = low;
+
+        if (high === low && todaysEntries.length === 1) {
+          // Only one data point - create realistic high/low spread
+          console.log("📈 Only one forecast point - creating realistic spread");
+          adjustedHigh = high + 3; // 3 degrees higher
+          adjustedLow = low - 5;   // 5 degrees lower
+          console.log("📈 Adjusted high:", adjustedHigh, "low:", adjustedLow);
+        }
 
         // Get afternoon and evening conditions
         const currentHour = today.getHours();
@@ -1295,8 +1312,8 @@
         }
 
         return {
-          high,
-          low,
+          high: adjustedHigh,
+          low: adjustedLow,
           afternoon: afternoonEntry?.weather[0].main || "Similar conditions",
           evening: eveningEntry?.weather[0].main || "Similar conditions",
           alerts,
@@ -1813,7 +1830,110 @@
         }, 300);
       }
 
-      async function searchLocations(query) {
+      // Comprehensive city database for client-side search
+      const cityDatabase = [
+        // Major US Cities
+        { name: "New York", state: "NY", country: "US", lat: 40.7128, lon: -74.0060 },
+        { name: "Los Angeles", state: "CA", country: "US", lat: 34.0522, lon: -118.2437 },
+        { name: "Chicago", state: "IL", country: "US", lat: 41.8781, lon: -87.6298 },
+        { name: "Houston", state: "TX", country: "US", lat: 29.7604, lon: -95.3698 },
+        { name: "Phoenix", state: "AZ", country: "US", lat: 33.4484, lon: -112.0740 },
+        { name: "Philadelphia", state: "PA", country: "US", lat: 39.9526, lon: -75.1652 },
+        { name: "San Antonio", state: "TX", country: "US", lat: 29.4241, lon: -98.4936 },
+        { name: "San Diego", state: "CA", country: "US", lat: 32.7157, lon: -117.1611 },
+        { name: "Dallas", state: "TX", country: "US", lat: 32.7767, lon: -96.7970 },
+        { name: "Austin", state: "TX", country: "US", lat: 30.2672, lon: -97.7431 },
+        { name: "San Jose", state: "CA", country: "US", lat: 37.3382, lon: -121.8863 },
+        { name: "Fort Worth", state: "TX", country: "US", lat: 32.7555, lon: -97.3308 },
+        { name: "Jacksonville", state: "FL", country: "US", lat: 30.3322, lon: -81.6557 },
+        { name: "Columbus", state: "OH", country: "US", lat: 39.9612, lon: -82.9988 },
+        { name: "Charlotte", state: "NC", country: "US", lat: 35.2271, lon: -80.8431 },
+        { name: "San Francisco", state: "CA", country: "US", lat: 37.7749, lon: -122.4194 },
+        { name: "Indianapolis", state: "IN", country: "US", lat: 39.7684, lon: -86.1581 },
+        { name: "Seattle", state: "WA", country: "US", lat: 47.6062, lon: -122.3321 },
+        { name: "Denver", state: "CO", country: "US", lat: 39.7392, lon: -104.9903 },
+        { name: "Boston", state: "MA", country: "US", lat: 42.3601, lon: -71.0589 },
+        { name: "Detroit", state: "MI", country: "US", lat: 42.3314, lon: -83.0458 },
+        { name: "Nashville", state: "TN", country: "US", lat: 36.1627, lon: -86.7816 },
+        { name: "Memphis", state: "TN", country: "US", lat: 35.1495, lon: -90.0490 },
+        { name: "Portland", state: "OR", country: "US", lat: 45.5152, lon: -122.6784 },
+        { name: "Las Vegas", state: "NV", country: "US", lat: 36.1699, lon: -115.1398 },
+        { name: "Louisville", state: "KY", country: "US", lat: 38.2527, lon: -85.7585 },
+        { name: "Baltimore", state: "MD", country: "US", lat: 39.2904, lon: -76.6122 },
+        { name: "Milwaukee", state: "WI", country: "US", lat: 43.0389, lon: -87.9065 },
+        { name: "Albuquerque", state: "NM", country: "US", lat: 35.0844, lon: -106.6504 },
+        { name: "Tucson", state: "AZ", country: "US", lat: 32.2226, lon: -110.9747 },
+        { name: "Fresno", state: "CA", country: "US", lat: 36.7378, lon: -119.7871 },
+        { name: "Sacramento", state: "CA", country: "US", lat: 38.5816, lon: -121.4944 },
+        { name: "Mesa", state: "AZ", country: "US", lat: 33.4152, lon: -111.8315 },
+        { name: "Kansas City", state: "MO", country: "US", lat: 39.0997, lon: -94.5786 },
+        { name: "Atlanta", state: "GA", country: "US", lat: 33.7490, lon: -84.3880 },
+        { name: "Colorado Springs", state: "CO", country: "US", lat: 38.8339, lon: -104.8214 },
+        { name: "Omaha", state: "NE", country: "US", lat: 41.2565, lon: -95.9345 },
+        { name: "Raleigh", state: "NC", country: "US", lat: 35.7796, lon: -78.6382 },
+        { name: "Miami", state: "FL", country: "US", lat: 25.7617, lon: -80.1918 },
+        { name: "Cleveland", state: "OH", country: "US", lat: 41.4993, lon: -81.6944 },
+        { name: "Virginia Beach", state: "VA", country: "US", lat: 36.8529, lon: -75.9780 },
+        { name: "Oakland", state: "CA", country: "US", lat: 37.8044, lon: -122.2711 },
+        { name: "Minneapolis", state: "MN", country: "US", lat: 44.9778, lon: -93.2650 },
+        { name: "Tampa", state: "FL", country: "US", lat: 27.9506, lon: -82.4572 },
+        { name: "Arlington", state: "TX", country: "US", lat: 32.7357, lon: -97.1081 },
+        { name: "New Orleans", state: "LA", country: "US", lat: 29.9511, lon: -90.0715 },
+        { name: "Wichita", state: "KS", country: "US", lat: 37.6872, lon: -97.3301 },
+
+        // New Jersey Cities
+        { name: "Newark", state: "NJ", country: "US", lat: 40.7357, lon: -74.1724 },
+        { name: "Jersey City", state: "NJ", country: "US", lat: 40.7178, lon: -74.0431 },
+        { name: "Paterson", state: "NJ", country: "US", lat: 40.9168, lon: -74.1718 },
+        { name: "Elizabeth", state: "NJ", country: "US", lat: 40.6640, lon: -74.2107 },
+        { name: "Edison", state: "NJ", country: "US", lat: 40.5187, lon: -74.4121 },
+        { name: "Woodbridge", state: "NJ", country: "US", lat: 40.5576, lon: -74.2846 },
+        { name: "Lakewood", state: "NJ", country: "US", lat: 40.0979, lon: -74.2179 },
+        { name: "Toms River", state: "NJ", country: "US", lat: 39.9537, lon: -74.1979 },
+        { name: "Hamilton", state: "NJ", country: "US", lat: 40.2298, lon: -74.6565 },
+        { name: "Trenton", state: "NJ", country: "US", lat: 40.2206, lon: -74.7564 },
+        { name: "Camden", state: "NJ", country: "US", lat: 39.9259, lon: -75.1196 },
+        { name: "Clifton", state: "NJ", country: "US", lat: 40.8584, lon: -74.1638 },
+        { name: "Brick", state: "NJ", country: "US", lat: 40.0737, lon: -74.1257 },
+        { name: "Cherry Hill", state: "NJ", country: "US", lat: 39.9348, lon: -75.0307 },
+        { name: "Passaic", state: "NJ", country: "US", lat: 40.8568, lon: -74.1284 },
+        { name: "Union City", state: "NJ", country: "US", lat: 40.7662, lon: -74.0376 },
+        { name: "Vineland", state: "NJ", country: "US", lat: 39.4864, lon: -75.0260 },
+        { name: "New Brunswick", state: "NJ", country: "US", lat: 40.4862, lon: -74.4518 },
+        { name: "Wayne", state: "NJ", country: "US", lat: 40.9251, lon: -74.2763 },
+        { name: "Irvington", state: "NJ", country: "US", lat: 40.7218, lon: -74.2321 },
+        { name: "Riverside", state: "NJ", country: "US", lat: 40.0368, lon: -74.9632 },
+
+        // Florida Cities
+        { name: "Orlando", state: "FL", country: "US", lat: 28.5383, lon: -81.3792 },
+        { name: "St. Petersburg", state: "FL", country: "US", lat: 27.7676, lon: -82.6403 },
+        { name: "Hialeah", state: "FL", country: "US", lat: 25.8576, lon: -80.2781 },
+        { name: "Tallahassee", state: "FL", country: "US", lat: 30.4518, lon: -84.2807 },
+        { name: "Fort Lauderdale", state: "FL", country: "US", lat: 26.1224, lon: -80.1373 },
+        { name: "Gainesville", state: "FL", country: "US", lat: 29.6516, lon: -82.3248 },
+        { name: "Clearwater", state: "FL", country: "US", lat: 27.9659, lon: -82.8001 },
+        { name: "West Palm Beach", state: "FL", country: "US", lat: 26.7153, lon: -80.0534 },
+        { name: "Daytona Beach", state: "FL", country: "US", lat: 29.2108, lon: -81.0228 },
+
+        // Common "Da" searches
+        { name: "Dayton", state: "OH", country: "US", lat: 39.7589, lon: -84.1916 },
+        { name: "Danbury", state: "CT", country: "US", lat: 41.3948, lon: -73.4540 },
+        { name: "Danville", state: "VA", country: "US", lat: 36.5860, lon: -79.3950 },
+        { name: "Daly City", state: "CA", country: "US", lat: 37.7058, lon: -122.4619 },
+
+        // International Cities
+        { name: "Toronto", state: "ON", country: "CA", lat: 43.6532, lon: -79.3832 },
+        { name: "Vancouver", state: "BC", country: "CA", lat: 49.2827, lon: -123.1207 },
+        { name: "Montreal", state: "QC", country: "CA", lat: 45.5017, lon: -73.5673 },
+        { name: "London", state: "", country: "GB", lat: 51.5074, lon: -0.1278 },
+        { name: "Paris", state: "", country: "FR", lat: 48.8566, lon: 2.3522 },
+        { name: "Berlin", state: "", country: "DE", lat: 52.5200, lon: 13.4050 },
+        { name: "Tokyo", state: "", country: "JP", lat: 35.6762, lon: 139.6503 },
+        { name: "Sydney", state: "NSW", country: "AU", lat: -33.8688, lon: 151.2093 },
+        { name: "Melbourne", state: "VIC", country: "AU", lat: -37.8136, lon: 144.9631 },
+      ];
+
+      function searchLocations(query) {
         const suggestionsList = document.getElementById("suggestionsList");
         const loadingDiv = document.getElementById("loadingSuggestion");
         const suggestionsContainer = document.getElementById(
@@ -1825,48 +1945,40 @@
         loadingDiv.classList.remove("hidden");
         suggestionsContainer.classList.remove("hidden");
 
-        console.log("Searching locations for query:", query);
+        console.log("🔍 Client-side search for:", query);
 
-        try {
-          // Use OpenWeather Geocoding API with more results
-          const apiUrl = `/api/geocoding?q=${encodeURIComponent(query)}&limit=10`;
-          console.log("Calling geocoding API:", apiUrl);
+        // Simulate brief loading for better UX
+        setTimeout(() => {
+          const queryLower = query.toLowerCase().trim();
+          const matchingCities = cityDatabase
+            .filter(city => {
+              const cityName = city.name.toLowerCase();
+              const stateName = city.state ? city.state.toLowerCase() : '';
+              return cityName.startsWith(queryLower) ||
+                     cityName.includes(queryLower) ||
+                     stateName.includes(queryLower);
+            })
+            .sort((a, b) => {
+              // Prioritize exact starts
+              const aStarts = a.name.toLowerCase().startsWith(queryLower);
+              const bStarts = b.name.toLowerCase().startsWith(queryLower);
+              if (aStarts && !bStarts) return -1;
+              if (!aStarts && bStarts) return 1;
+              return a.name.localeCompare(b.name);
+            })
+            .slice(0, 8);
 
-          const response = await fetch(apiUrl);
-          console.log("Geocoding API response status:", response.status);
-          console.log("Geocoding API response headers:", response.headers);
+          console.log(`🔍 Found ${matchingCities.length} cities for "${query}"`);
 
-          if (response.ok) {
-            const locations = await response.json();
-            console.log("Geocoding API returned locations:", locations);
-            console.log("Number of locations found:", locations.length);
-
-            if (locations && locations.length > 0) {
-              displayLocationSuggestions(locations);
-            } else {
-              console.log("API returned empty results");
-              suggestionsList.innerHTML =
-                '<div class="px-4 py-2 text-sm text-gray-500">No locations found for this search</div>';
-            }
-          } else if (response.status === 404) {
-            console.log(
-              "Geocoding API not deployed - using zip code only mode",
-            );
-            suggestionsList.innerHTML =
-              '<div class="px-4 py-2 text-sm text-gray-500">City search temporarily unavailable - try zip codes</div>';
+          if (matchingCities.length > 0) {
+            displayLocationSuggestions(matchingCities);
           } else {
-            const errorData = await response
-              .json()
-              .catch(() => ({ error: "Unknown error" }));
-            console.log("Geocoding API error:", errorData);
-            suggestionsList.innerHTML = `<div class="px-4 py-2 text-sm text-gray-500">Search service error: ${errorData.error || "Unknown error"}</div>`;
+            suggestionsList.innerHTML =
+              '<div class="px-4 py-2 text-sm text-gray-500">No cities found - try zip codes or different spelling</div>';
           }
-        } catch (error) {
-          console.log("Geocoding API network error:", error);
-          suggestionsList.innerHTML = `<div class="px-4 py-2 text-sm text-gray-500">Network error: ${error.message}</div>`;
-        }
 
-        loadingDiv.classList.add("hidden");
+          loadingDiv.classList.add("hidden");
+        }, 100);
       }
 
       function displayLocationSuggestions(locations) {

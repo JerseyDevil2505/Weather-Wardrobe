@@ -1018,7 +1018,7 @@
         });
 
         // Update unit preference buttons
-        console.log("🎛️ Updating unit preference buttons - current preference:", userProfile.unitPreference);
+        console.log("���️ Updating unit preference buttons - current preference:", userProfile.unitPreference);
         document.querySelectorAll(".unit-btn").forEach((btn) => {
           const value = btn.getAttribute("data-value");
           console.log("🎛️ Button:", value, "matches current pref?", value === userProfile.unitPreference);
@@ -1568,9 +1568,21 @@
         let displayWindSpeed = weather.windSpeed;
         let displayForecast = weather.forecast;
 
-        // If user wants metric but we got imperial values, convert them
-        if (userProfile.unitPreference === 'metric' && currentUnits === 'imperial') {
-          console.log("🔄 Converting imperial to metric for display");
+        // Check for impossible temperature values (indicates API returned wrong units)
+        const impossibleMetric = userProfile.unitPreference === 'metric' && displayTemp > 50; // 50°C+ is impossible weather
+        const impossibleImperial = userProfile.unitPreference === 'imperial' && displayTemp < 10; // Below 10°F is very rare
+
+        console.log("🌡️ Temperature check - value:", displayTemp);
+        console.log("🌡️ Impossible metric (>50°C)?", impossibleMetric);
+        console.log("🌡️ Impossible imperial (<10°F)?", impossibleImperial);
+
+        // If user wants metric but we got imperial values, OR if temp values seem wrong, convert them
+        if ((userProfile.unitPreference === 'metric' && currentUnits === 'imperial') || impossibleMetric) {
+          if (impossibleMetric) {
+            console.log("🔄 FORCED conversion - API returned Fahrenheit values despite requesting Celsius!");
+          } else {
+            console.log("🔄 Converting imperial to metric for display");
+          }
           console.log("🔄 Before conversion - temp:", displayTemp, "feelsLike:", displayFeelsLike, "wind:", displayWindSpeed);
 
           displayTemp = fahrenheitToCelsius(weather.temperature);
@@ -1590,8 +1602,8 @@
           }
           currentUnits = 'metric'; // Update for formatting
         }
-        // If user wants imperial but we got metric values, convert them
-        else if (userProfile.unitPreference === 'imperial' && currentUnits === 'metric') {
+        // If user wants imperial but we got metric values, OR if temp values seem wrong, convert them
+        else if ((userProfile.unitPreference === 'imperial' && currentUnits === 'metric') || impossibleImperial) {
           console.log("🔄 Converting metric to imperial for display");
           displayTemp = celsiusToFahrenheit(weather.temperature);
           displayFeelsLike = celsiusToFahrenheit(weather.feelsLike);

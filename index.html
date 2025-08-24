@@ -1152,7 +1152,7 @@
           alerts:
             alerts.length > 0
               ? alerts
-              : [`High: ${high}°F, Low: ${low}°F expected today`],
+              : [`High: ${high}°F, Low: ${low}��F expected today`],
         };
       }
 
@@ -1531,19 +1531,58 @@
       }
 
       function displayWeather(weather) {
-        // Update weather info with dynamic units
+        // Convert values if needed based on user preference
+        let displayTemp = weather.temperature;
+        let displayFeelsLike = weather.feelsLike;
+        let displayWindSpeed = weather.windSpeed;
+        let displayForecast = weather.forecast;
+
+        // If user wants metric but we got imperial values, convert them
+        if (userProfile.unitPreference === 'metric' && currentUnits === 'imperial') {
+          console.log("Converting imperial to metric for display");
+          displayTemp = fahrenheitToCelsius(weather.temperature);
+          displayFeelsLike = fahrenheitToCelsius(weather.feelsLike);
+          displayWindSpeed = mphToKmh(weather.windSpeed);
+
+          if (displayForecast) {
+            displayForecast = {
+              ...displayForecast,
+              high: fahrenheitToCelsius(displayForecast.high),
+              low: fahrenheitToCelsius(displayForecast.low)
+            };
+          }
+          currentUnits = 'metric'; // Update for formatting
+        }
+        // If user wants imperial but we got metric values, convert them
+        else if (userProfile.unitPreference === 'imperial' && currentUnits === 'metric') {
+          console.log("Converting metric to imperial for display");
+          displayTemp = celsiusToFahrenheit(weather.temperature);
+          displayFeelsLike = celsiusToFahrenheit(weather.feelsLike);
+          displayWindSpeed = displayWindSpeed / 1.60934; // km/h to mph
+
+          if (displayForecast) {
+            displayForecast = {
+              ...displayForecast,
+              high: celsiusToFahrenheit(displayForecast.high),
+              low: celsiusToFahrenheit(displayForecast.low)
+            };
+          }
+          currentUnits = 'imperial'; // Update for formatting
+        }
+
+        // Update weather info with converted values
         document.getElementById("weatherLocation").textContent =
           weather.location;
         document.getElementById("weatherTemp").textContent =
-          formatTemperature(weather.temperature);
+          formatTemperature(displayTemp);
         document.getElementById("weatherCondition").textContent =
           weather.condition;
         document.getElementById("feelsLike").textContent =
-          formatTemperature(weather.feelsLike);
+          formatTemperature(displayFeelsLike);
         document.getElementById("humidity").textContent =
           weather.humidity + "%";
         document.getElementById("windSpeed").textContent =
-          formatWindSpeed(weather.windSpeed);
+          formatWindSpeed(displayWindSpeed);
 
         // Update weather icon
         const iconContainer = document.getElementById("weatherIcon");
@@ -1551,26 +1590,26 @@
 
         // Update today's forecast if available
         const forecastContainer = document.getElementById("todaysForecast");
-        if (weather.forecast) {
-          console.log("Displaying forecast:", weather.forecast); // Debug log
+        if (displayForecast) {
+          console.log("Displaying forecast:", displayForecast); // Debug log
           let forecastHTML = `
                     <div class="bg-blue-50 rounded-xl p-4 mt-4">
                         <h4 class="font-semibold text-blue-800 mb-2">📅 Today's Forecast</h4>
                         <div class="grid grid-cols-2 gap-4 text-sm mb-3">
                             <div class="text-center">
                                 <p class="text-blue-600">High</p>
-                                <p class="font-bold text-blue-800">${formatTemperature(weather.forecast.high)}</p>
+                                <p class="font-bold text-blue-800">${formatTemperature(displayForecast.high)}</p>
                             </div>
                             <div class="text-center">
                                 <p class="text-blue-600">Low</p>
-                                <p class="font-bold text-blue-800">${formatTemperature(weather.forecast.low)}</p>
+                                <p class="font-bold text-blue-800">${formatTemperature(displayForecast.low)}</p>
                             </div>
                         </div>
                 `;
 
-          if (weather.forecast.alerts && weather.forecast.alerts.length > 0) {
+          if (displayForecast.alerts && displayForecast.alerts.length > 0) {
             forecastHTML += '<div class="space-y-1">';
-            weather.forecast.alerts.forEach((alert) => {
+            displayForecast.alerts.forEach((alert) => {
               forecastHTML += `<p class="text-blue-700 text-xs">⚠️ ${alert}</p>`;
             });
             forecastHTML += "</div>";
@@ -1584,11 +1623,11 @@
           forecastContainer.classList.add("hidden");
         }
 
-        // Update clothing advice with detailed categorized recommendations
+        // Update clothing advice with detailed categorized recommendations using converted values
         const advice = getClothingRecommendation(
-          weather.temperature,
+          displayTemp,
           weather.condition,
-          weather.forecast,
+          displayForecast,
         );
 
         // The new system populates individual categories automatically

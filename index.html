@@ -854,10 +854,15 @@
       });
 
       function loadUserData() {
+        console.log("📱 loadUserData called");
         try {
           const profile = localStorage.getItem("weatherWardrobeProfile");
+          console.log("📱 Raw profile from localStorage:", profile);
+
           if (profile) {
             userProfile = JSON.parse(profile);
+            console.log("📱 Parsed userProfile:", userProfile);
+
             // Ensure specialConsiderations is always an array
             if (!Array.isArray(userProfile.specialConsiderations)) {
               userProfile.specialConsiderations = [];
@@ -865,16 +870,22 @@
             // Ensure unitPreference has a default value
             if (!userProfile.unitPreference) {
               userProfile.unitPreference = "auto";
+              console.log("📱 Set default unitPreference to 'auto'");
             }
+          } else {
+            console.log("📱 No profile found in localStorage, using defaults");
           }
 
           const location = localStorage.getItem("weatherWardrobeLocation");
           if (location) {
             savedLocation = location;
             document.getElementById("locationInput").value = location;
+            console.log("📱 Loaded saved location:", location);
           }
+
+          console.log("📱 Final userProfile after load:", userProfile);
         } catch (e) {
-          console.log("Storage not available");
+          console.log("📱 Storage not available:", e);
         }
       }
 
@@ -1007,8 +1018,10 @@
         });
 
         // Update unit preference buttons
+        console.log("🎛️ Updating unit preference buttons - current preference:", userProfile.unitPreference);
         document.querySelectorAll(".unit-btn").forEach((btn) => {
           const value = btn.getAttribute("data-value");
+          console.log("🎛️ Button:", value, "matches current pref?", value === userProfile.unitPreference);
           if (value === userProfile.unitPreference) {
             btn.className =
               "unit-btn p-3 text-xs border rounded-lg transition-all bg-blue-100 border-blue-500 text-blue-700";
@@ -1059,6 +1072,10 @@
       }
 
       function setUnitPref(unit) {
+        console.log("🔧 setUnitPref called with:", unit);
+        console.log("🔧 Before change - userProfile.unitPreference:", userProfile.unitPreference);
+        console.log("🔧 Before change - currentUnits:", currentUnits);
+
         userProfile.unitPreference = unit;
 
         // Immediately update current units if not auto
@@ -1068,12 +1085,16 @@
           currentUnits = detectUnits(currentCountry);
         }
 
-        console.log("Unit preference changed to:", unit, "currentUnits now:", currentUnits);
+        console.log("🔧 After change - userProfile.unitPreference:", userProfile.unitPreference);
+        console.log("🔧 After change - currentUnits:", currentUnits);
         updateUI();
 
         // If weather is currently displayed, refresh with new units
         if (!document.getElementById("weatherResults").classList.contains("hidden")) {
+          console.log("🔧 Weather is displayed, refreshing with new units");
           refreshWeatherWithNewUnits();
+        } else {
+          console.log("🔧 Weather not displayed, skipping refresh");
         }
       }
 
@@ -1087,6 +1108,9 @@
       }
 
       function saveProfile() {
+        console.log("💾 saveProfile called");
+        console.log("💾 Current userProfile before save:", JSON.stringify(userProfile, null, 2));
+
         const name = document.getElementById("userName").value;
         userProfile.name = name;
         userProfile.hasLearned = true;
@@ -1096,12 +1120,14 @@
             "weatherWardrobeProfile",
             JSON.stringify(userProfile),
           );
+          console.log("💾 Profile saved to localStorage");
         } catch (e) {
-          console.log("Cannot save to storage");
+          console.log("💾 Cannot save to storage");
         }
 
         toggleProfile();
         updateUI();
+        console.log("💾 saveProfile completed");
       }
 
       function editLocation() {
@@ -1152,7 +1178,7 @@
           alerts:
             alerts.length > 0
               ? alerts
-              : [`High: ${high}°F, Low: ${low}��F expected today`],
+              : [`High: ${high}°F, Low: ${low}°F expected today`],
         };
       }
 
@@ -1531,6 +1557,11 @@
       }
 
       function displayWeather(weather) {
+        console.log("🌡️ displayWeather called");
+        console.log("🌡️ userProfile.unitPreference:", userProfile.unitPreference);
+        console.log("🌡️ currentUnits:", currentUnits);
+        console.log("🌡️ Original weather data:", weather);
+
         // Convert values if needed based on user preference
         let displayTemp = weather.temperature;
         let displayFeelsLike = weather.feelsLike;
@@ -1539,23 +1570,29 @@
 
         // If user wants metric but we got imperial values, convert them
         if (userProfile.unitPreference === 'metric' && currentUnits === 'imperial') {
-          console.log("Converting imperial to metric for display");
+          console.log("🔄 Converting imperial to metric for display");
+          console.log("🔄 Before conversion - temp:", displayTemp, "feelsLike:", displayFeelsLike, "wind:", displayWindSpeed);
+
           displayTemp = fahrenheitToCelsius(weather.temperature);
           displayFeelsLike = fahrenheitToCelsius(weather.feelsLike);
           displayWindSpeed = mphToKmh(weather.windSpeed);
 
+          console.log("🔄 After conversion - temp:", displayTemp, "feelsLike:", displayFeelsLike, "wind:", displayWindSpeed);
+
           if (displayForecast) {
+            console.log("🔄 Converting forecast - original high:", displayForecast.high, "low:", displayForecast.low);
             displayForecast = {
               ...displayForecast,
               high: fahrenheitToCelsius(displayForecast.high),
               low: fahrenheitToCelsius(displayForecast.low)
             };
+            console.log("🔄 Converted forecast - high:", displayForecast.high, "low:", displayForecast.low);
           }
           currentUnits = 'metric'; // Update for formatting
         }
         // If user wants imperial but we got metric values, convert them
         else if (userProfile.unitPreference === 'imperial' && currentUnits === 'metric') {
-          console.log("Converting metric to imperial for display");
+          console.log("🔄 Converting metric to imperial for display");
           displayTemp = celsiusToFahrenheit(weather.temperature);
           displayFeelsLike = celsiusToFahrenheit(weather.feelsLike);
           displayWindSpeed = displayWindSpeed / 1.60934; // km/h to mph
@@ -1568,6 +1605,8 @@
             };
           }
           currentUnits = 'imperial'; // Update for formatting
+        } else {
+          console.log("🔄 No conversion needed - userPref:", userProfile.unitPreference, "currentUnits:", currentUnits);
         }
 
         // Update weather info with converted values

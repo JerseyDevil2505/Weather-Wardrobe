@@ -1140,7 +1140,7 @@
         }
         if (high - currentTemp > 8) {
           alerts.push(
-            `Temperature may rise to ${high}°F later - dress in layers!`,
+            `Temperature may rise to ${formatTemperature(high)} later - dress in layers!`,
           );
         }
 
@@ -1257,15 +1257,15 @@
         // Temperature change alerts
         const currentTemp = Math.round(todaysEntries[0]?.main.temp || 0);
         if (high - currentTemp > 10) {
-          alerts.push(`Warming up significantly - high of ${high}°F expected!`);
+          alerts.push(`Warming up significantly - high of ${formatTemperature(high)} expected!`);
         }
         if (currentTemp - low > 10 && currentHour < 18) {
-          alerts.push(`Cooling down later - low of ${low}°F tonight!`);
+          alerts.push(`Cooling down later - low of ${formatTemperature(low)} tonight!`);
         }
 
         // If no specific alerts, add a general one
         if (alerts.length === 0) {
-          alerts.push(`High: ${high}°F, Low: ${low}°F expected today`);
+          alerts.push(`High: ${formatTemperature(high)}, Low: ${formatTemperature(low)} expected today`);
         }
 
         return {

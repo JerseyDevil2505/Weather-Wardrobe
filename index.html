@@ -1338,13 +1338,19 @@
           // Use secure serverless function instead of direct API calls
           console.log("Using secure API for:", location); // Debug log
 
-          // Detect units based on selected location or default to imperial
-          let detectedUnits = 'imperial';
-          if (selectedLocation && selectedLocation.country) {
-            detectedUnits = detectUnits(selectedLocation.country);
-            currentCountry = selectedLocation.country;
+          // Respect user's manual preference, only auto-detect if set to "auto"
+          if (userProfile.unitPreference !== 'auto') {
+            // User manually chose Imperial or Metric - respect their choice
+            currentUnits = userProfile.unitPreference;
+          } else {
+            // Auto mode - detect based on location
+            let detectedUnits = 'imperial';
+            if (selectedLocation && selectedLocation.country) {
+              detectedUnits = detectUnits(selectedLocation.country);
+              currentCountry = selectedLocation.country;
+            }
+            currentUnits = detectedUnits;
           }
-          currentUnits = detectedUnits;
 
           console.log("Using units:", currentUnits, "for country:", currentCountry);
 

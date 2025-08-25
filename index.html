@@ -1446,27 +1446,41 @@
         let enhancedLocation = location;
         let useCoordinates = false;
         let preferredLocationName = null;
+        let currentSelectedLocation = selectedLocation; // Preserve for later use
 
         // If user selected a location from autocomplete, use coordinates for precise results
         if (selectedLocation && selectedLocation.lat && selectedLocation.lon) {
           enhancedLocation = `lat=${selectedLocation.lat}&lon=${selectedLocation.lon}`;
           useCoordinates = true;
-          // Preserve the full location name with state
-          preferredLocationName = formatLocationName(selectedLocation);
-          console.log(
-            "Using coordinates for precise location:",
-            enhancedLocation,
-            "with preferred name:",
-            preferredLocationName,
-          );
+
+          // Only use preferred name if we have a proper city name (not just coordinates)
+          if (selectedLocation.name && selectedLocation.name !== "Current Location") {
+            preferredLocationName = formatLocationName(selectedLocation);
+            console.log(
+              "🎯 Using coordinates with known city name:",
+              enhancedLocation,
+              "display name:",
+              preferredLocationName
+            );
+          } else {
+            // For current location, let the API provide the city name
+            preferredLocationName = null;
+            console.log(
+              "📍 Using coordinates for current location, will use API city name:",
+              enhancedLocation,
+              "coords:",
+              selectedLocation.lat,
+              selectedLocation.lon
+            );
+          }
         } else {
           // For direct input (like zip codes or typed cities), use the text as-is
           enhancedLocation = location;
           useCoordinates = false;
-          console.log("Using text-based location:", enhancedLocation);
+          console.log("📝 Using text-based location:", enhancedLocation);
         }
 
-        // Reset selectedLocation for next search
+        // Reset selectedLocation for next search (but preserve currentSelectedLocation for this request)
         selectedLocation = null;
 
         console.log("Final location to search:", enhancedLocation); // Debug log
@@ -1491,12 +1505,16 @@
           if (userProfile.unitPreference !== 'auto') {
             // User manually chose Imperial or Metric - respect their choice
             currentUnits = userProfile.unitPreference;
+            console.log("🎛️ Using manual unit preference:", currentUnits);
           } else {
             // Auto mode - detect based on location
             let detectedUnits = 'imperial';
-            if (selectedLocation && selectedLocation.country) {
-              detectedUnits = detectUnits(selectedLocation.country);
-              currentCountry = selectedLocation.country;
+            if (currentSelectedLocation && currentSelectedLocation.country) {
+              detectedUnits = detectUnits(currentSelectedLocation.country);
+              currentCountry = currentSelectedLocation.country;
+              console.log("🌍 Auto-detected units based on country:", detectedUnits, "for", currentCountry);
+            } else {
+              console.log("🌍 No country data, defaulting to imperial units");
             }
             currentUnits = detectedUnits;
           }
@@ -1508,10 +1526,13 @@
             ? `/api/weather?${enhancedLocation}&type=current&units=${currentUnits}`
             : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=current&units=${currentUnits}`;
 
-          const currentResponse = await fetch(currentUrl);
+          console.log("🌐 Making weather API request to:", currentUrl);
 
+          const currentResponse = await fetch(currentUrl);
           const currentData = await currentResponse.json();
-          console.log("Current weather from secure API:", currentData); // Debug log
+
+          console.log("🌤️ Weather API response status:", currentResponse.status);
+          console.log("🌤️ Weather API response data:", currentData);
 
           if (currentResponse.ok) {
             // Get today's forecast through secure API
@@ -1596,10 +1617,11 @@
             }
             updateUI();
           } else {
-            showError(
-              currentData.error ||
-                'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").',
-            );
+            console.error("❌ Weather API error:", currentData);
+            const errorMessage = useCoordinates
+              ? `Unable to get weather for your current location (${currentSelectedLocation?.lat?.toFixed(4)}, ${currentSelectedLocation?.lon?.toFixed(4)}). Please try entering a city name manually.`
+              : (currentData.error || 'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").');
+            showError(errorMessage);
           }
         } catch (err) {
           console.log("Secure API call failed, using demo data:", err);

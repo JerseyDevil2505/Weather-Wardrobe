@@ -131,7 +131,6 @@
             </button>
           </div>
         </div>
-
         <!-- Profile Setup -->
         <div
           id="profileSection"
@@ -185,7 +184,6 @@
                 </button>
               </div>
             </div>
-
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2"
@@ -395,7 +393,6 @@
             </button>
           </div>
         </div>
-
         <!-- Location Input -->
         <div class="p-6">
           <!-- Saved Location Display -->
@@ -596,7 +593,6 @@
           >
             <p class="text-red-700 text-sm" id="errorText"></p>
           </div>
-
           <!-- Weather Results -->
           <div id="weatherResults" class="hidden space-y-6">
             <!-- Weather Info -->
@@ -901,8 +897,12 @@
         <p>Stay comfortable, dress smart! 🌤️</p>
       </div>
     </div>
-
     <script>
+      // OpenWeather API Configuration
+      const API_KEY = '2af9656a996aa63081867e24aa1958cd';
+      const WEATHER_API_BASE = 'https://api.openweathermap.org/data/2.5';
+      const GEO_API_BASE = 'https://api.openweathermap.org/geo/1.0';
+
       // Global state
       let userProfile = {
         name: "",
@@ -920,6 +920,13 @@
       let currentUnits = "imperial"; // imperial or metric
       let currentCountry = null;
 
+      // Global variables for location management
+      let currentUserCountry = null;
+      let selectedCountry = "";
+      let selectedLocation = null;
+      let searchTimeout;
+      let recentLocations = [];
+
       // Load saved data on page load
       window.addEventListener("load", function () {
         loadUserData();
@@ -927,7 +934,7 @@
       });
 
       function loadUserData() {
-        console.log("���� loadUserData called");
+        console.log("📱 loadUserData called");
         try {
           const profile = localStorage.getItem("weatherWardrobeProfile");
           console.log("📱 Raw profile from localStorage:", profile);
@@ -966,7 +973,7 @@
 
           console.log("📱 Final userProfile after load:", userProfile);
         } catch (e) {
-          console.log("�� Storage not available:", e);
+          console.log("🚫 Storage not available:", e);
         }
       }
 
@@ -1105,7 +1112,6 @@
         const rounded = Math.round(speed);
         return units === 'metric' ? `${rounded} km/h` : `${rounded} mph`;
       }
-
       function updateUI() {
         // Update welcome text
         const welcomeText = document.getElementById("welcomeText");
@@ -1136,61 +1142,6 @@
           // Update button state
           validateLocationAndEnableButton();
         }
-
-      // Function to enhance saved location display
-      function enhanceSavedLocationDisplay(locationString) {
-        console.log("🏷️ Enhancing saved location display:", locationString);
-
-        // If it ends with ", US", try to enhance it
-        if (locationString.endsWith(", US")) {
-          const cityName = locationString.replace(", US", "");
-
-          // Common NJ cities that might be showing as "City, US"
-          const njCities = {
-            "Riverside": "Riverside, New Jersey",
-            "Newark": "Newark, New Jersey",
-            "Trenton": "Trenton, New Jersey",
-            "Camden": "Camden, New Jersey",
-            "Jersey City": "Jersey City, New Jersey",
-            "Paterson": "Paterson, New Jersey",
-            "Elizabeth": "Elizabeth, New Jersey",
-            "Edison": "Edison, New Jersey",
-            "Woodbridge": "Woodbridge, New Jersey",
-            "Lakewood": "Lakewood, New Jersey",
-            "Toms River": "Toms River, New Jersey",
-            "Hamilton": "Hamilton, New Jersey",
-            "Clifton": "Clifton, New Jersey",
-            "Brick": "Brick, New Jersey",
-            "Cherry Hill": "Cherry Hill, New Jersey",
-            "Passaic": "Passaic, New Jersey",
-            "Union City": "Union City, New Jersey",
-            "Vineland": "Vineland, New Jersey",
-            "New Brunswick": "New Brunswick, New Jersey",
-            "Wayne": "Wayne, New Jersey",
-            "Irvington": "Irvington, New Jersey"
-          };
-
-          if (njCities[cityName]) {
-            console.log(`🏷️ Enhanced "${locationString}" to "${njCities[cityName]}"`);
-            return njCities[cityName];
-          }
-
-          // If user has country preference set, use that
-          const countryPref = userProfile.countryPreference;
-          if (countryPref && countryPref !== 'auto') {
-            const fullCountryName = getFullCountryName(countryPref);
-            const enhanced = `${cityName}, ${fullCountryName}`;
-            console.log(`🏷️ Enhanced "${locationString}" to "${enhanced}" using country preference`);
-            return enhanced;
-          }
-
-          // Default enhancement for US locations
-          return `${cityName}, United States`;
-        }
-
-        // Return as-is if it doesn't need enhancement
-        return locationString;
-      }
 
         // Update profile form
         if (userProfile.name) {
@@ -1249,7 +1200,7 @@
         });
 
         // Update unit preference buttons
-        console.log("���️ Updating unit preference buttons - current preference:", userProfile.unitPreference);
+        console.log("🎛️ Updating unit preference buttons - current preference:", userProfile.unitPreference);
         document.querySelectorAll(".unit-btn").forEach((btn) => {
           const value = btn.getAttribute("data-value");
           console.log("🎛️ Button:", value, "matches current pref?", value === userProfile.unitPreference);
@@ -1280,6 +1231,61 @@
             userProfile.specialConsiderations &&
             userProfile.specialConsiderations.includes(value);
         });
+      }
+
+      // Function to enhance saved location display
+      function enhanceSavedLocationDisplay(locationString) {
+        console.log("🏷️ Enhancing saved location display:", locationString);
+
+        // If it ends with ", US", try to enhance it
+        if (locationString.endsWith(", US")) {
+          const cityName = locationString.replace(", US", "");
+
+          // Common NJ cities that might be showing as "City, US"
+          const njCities = {
+            "Riverside": "Riverside, New Jersey",
+            "Newark": "Newark, New Jersey",
+            "Trenton": "Trenton, New Jersey",
+            "Camden": "Camden, New Jersey",
+            "Jersey City": "Jersey City, New Jersey",
+            "Paterson": "Paterson, New Jersey",
+            "Elizabeth": "Elizabeth, New Jersey",
+            "Edison": "Edison, New Jersey",
+            "Woodbridge": "Woodbridge, New Jersey",
+            "Lakewood": "Lakewood, New Jersey",
+            "Toms River": "Toms River, New Jersey",
+            "Hamilton": "Hamilton, New Jersey",
+            "Clifton": "Clifton, New Jersey",
+            "Brick": "Brick, New Jersey",
+            "Cherry Hill": "Cherry Hill, New Jersey",
+            "Passaic": "Passaic, New Jersey",
+            "Union City": "Union City, New Jersey",
+            "Vineland": "Vineland, New Jersey",
+            "New Brunswick": "New Brunswick, New Jersey",
+            "Wayne": "Wayne, New Jersey",
+            "Irvington": "Irvington, New Jersey"
+          };
+
+          if (njCities[cityName]) {
+            console.log(`🏷️ Enhanced "${locationString}" to "${njCities[cityName]}"`);
+            return njCities[cityName];
+          }
+
+          // If user has country preference set, use that
+          const countryPref = userProfile.countryPreference;
+          if (countryPref && countryPref !== 'auto') {
+            const fullCountryName = getFullCountryName(countryPref);
+            const enhanced = `${cityName}, ${fullCountryName}`;
+            console.log(`🏷️ Enhanced "${locationString}" to "${enhanced}" using country preference`);
+            return enhanced;
+          }
+
+          // Default enhancement for US locations
+          return `${cityName}, United States`;
+        }
+
+        // Return as-is if it doesn't need enhancement
+        return locationString;
       }
 
       function toggleProfile() {
@@ -1339,7 +1345,6 @@
           console.log("🔧 Weather not displayed, skipping refresh");
         }
       }
-
 
       function toggleSpecialConsideration(consideration) {
         const index = userProfile.specialConsiderations.indexOf(consideration);
@@ -1403,683 +1408,10 @@
         // Update button state
         validateLocationAndEnableButton();
 
-        console.log("Edit mode activated, country-first flow enabled"); // Debug log
+        console.log("Edit mode activated, country-first flow enabled");
       }
-
-      function getSimpleForecast(currentData) {
-        // Create a simple forecast based on current weather when detailed forecast fails
-        const currentTemp = Math.round(currentData.main.temp);
-        const alerts = [];
-
-        // Generate some basic forecast info
-        const high = currentTemp + Math.floor(Math.random() * 10) + 2; // 2-12 degrees higher
-        const low = currentTemp - Math.floor(Math.random() * 15) - 5; // 5-20 degrees lower
-
-        // Add some basic alerts based on current conditions
-        if (currentData.weather[0].main.toLowerCase().includes("thunder")) {
-          alerts.push(
-            "Thunderstorms possible - bring an umbrella and avoid outdoor activities!",
-          );
-        }
-        if (currentData.wind?.speed > 10) {
-          alerts.push(
-            "Windy conditions continuing - secure clothing and accessories!",
-          );
-        }
-        if (high - currentTemp > 8) {
-          alerts.push(
-            `Temperature may rise to ${formatTemperature(high)} later - dress in layers!`,
-          );
-        }
-
-        return {
-          high,
-          low,
-          afternoon: currentData.weather[0].main,
-          evening: currentData.weather[0].main,
-          alerts:
-            alerts.length > 0
-              ? alerts
-              : [`High: ${high}°F, Low: ${low}°F expected today`],
-        };
-      }
-
-      function getTodaysForecast(forecastData) {
-        if (
-          !forecastData ||
-          !forecastData.list ||
-          forecastData.list.length === 0
-        ) {
-          console.log("No forecast data available"); // Debug log
-          return null;
-        }
-
-        const today = new Date();
-        const todayStr = today.toISOString().split("T")[0]; // YYYY-MM-DD format
-
-        // Filter today's forecast entries (3-hour intervals)
-        const todaysEntries = forecastData.list.filter((entry) => {
-          const entryDate = new Date(entry.dt * 1000)
-            .toISOString()
-            .split("T")[0];
-          return entryDate === todayStr;
-        });
-
-        console.log("Today entries found:", todaysEntries.length); // Debug log
-
-        if (todaysEntries.length === 0) {
-          // If no entries for today, use tomorrow's data
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          const tomorrowStr = tomorrow.toISOString().split("T")[0];
-
-          const tomorrowEntries = forecastData.list
-            .filter((entry) => {
-              const entryDate = new Date(entry.dt * 1000)
-                .toISOString()
-                .split("T")[0];
-              return entryDate === tomorrowStr;
-            })
-            .slice(0, 3); // Just first 3 entries of tomorrow
-
-          if (tomorrowEntries.length === 0) {
-            return null;
-          }
-
-          const temps = tomorrowEntries.map((entry) => entry.main.temp);
-          return {
-            high: Math.round(Math.max(...temps)),
-            low: Math.round(Math.min(...temps)),
-            afternoon: tomorrowEntries[0]?.weather[0].main || "Unknown",
-            evening: tomorrowEntries[1]?.weather[0].main || "Unknown",
-            alerts: ["Showing tomorrow's forecast"],
-          };
-        }
-
-        // Find high and low temps for today
-        const temps = todaysEntries.map((entry) => entry.main.temp);
-        console.log("📈 Today's forecast temperatures:", temps);
-        console.log("📈 Number of forecast entries for today:", todaysEntries.length);
-
-        const high = Math.round(Math.max(...temps));
-        const low = Math.round(Math.min(...temps));
-
-        console.log("📈 Calculated high:", high, "low:", low);
-
-        // If high and low are the same, use a reasonable spread
-        let adjustedHigh = high;
-        let adjustedLow = low;
-
-        if (high === low && todaysEntries.length === 1) {
-          // Only one data point - create realistic high/low spread
-          console.log("📈 Only one forecast point - creating realistic spread");
-          adjustedHigh = high + 3; // 3 degrees higher
-          adjustedLow = low - 5;   // 5 degrees lower
-          console.log("📈 Adjusted high:", adjustedHigh, "low:", adjustedLow);
-        }
-
-        // Get afternoon and evening conditions
-        const currentHour = today.getHours();
-        const afternoonEntry = todaysEntries.find((entry) => {
-          const hour = new Date(entry.dt * 1000).getHours();
-          return hour >= 14 && hour <= 17; // 2 PM - 5 PM
-        });
-        const eveningEntry = todaysEntries.find((entry) => {
-          const hour = new Date(entry.dt * 1000).getHours();
-          return hour >= 18 && hour <= 21; // 6 PM - 9 PM
-        });
-
-        // Generate alerts based on forecast
-        const alerts = [];
-
-        // Check for rain/snow later
-        const laterEntries = todaysEntries.filter((entry) => {
-          const hour = new Date(entry.dt * 1000).getHours();
-          return hour > currentHour;
-        });
-
-        const rainLater = laterEntries.some(
-          (entry) =>
-            entry.weather[0].main.toLowerCase().includes("rain") ||
-            entry.weather[0].main.toLowerCase().includes("drizzle"),
-        );
-        const snowLater = laterEntries.some((entry) =>
-          entry.weather[0].main.toLowerCase().includes("snow"),
-        );
-        const windyLater = laterEntries.some(
-          (entry) => (entry.wind?.speed || 0) > 15,
-        );
-
-        if (rainLater)
-          alerts.push(
-            "Rain expected later today - consider bringing an umbrella!",
-          );
-        if (snowLater)
-          alerts.push("Snow expected later - pack extra warm layers!");
-        if (windyLater)
-          alerts.push("Getting windier later - consider a windbreaker!");
-
-        // Temperature change alerts
-        const currentTemp = Math.round(todaysEntries[0]?.main.temp || 0);
-        if (high - currentTemp > 10) {
-          alerts.push(`Warming up significantly - high of ${formatTemperature(high)} expected!`);
-        }
-        if (currentTemp - low > 10 && currentHour < 18) {
-          alerts.push(`Cooling down later - low of ${formatTemperature(low)} tonight!`);
-        }
-
-        // If no specific alerts, add a general one
-        if (alerts.length === 0) {
-          alerts.push(`High: ${formatTemperature(high)}, Low: ${formatTemperature(low)} expected today`);
-        }
-
-        return {
-          high: adjustedHigh,
-          low: adjustedLow,
-          afternoon: afternoonEntry?.weather[0].main || "Similar conditions",
-          evening: eveningEntry?.weather[0].main || "Similar conditions",
-          alerts,
-        };
-      }
-
-      async function getWeather() {
-        console.log("🌤️ getWeather function called");
-
-        const locationInput = document.getElementById("locationInput");
-        const countrySelect = document.getElementById("locationCountrySelect");
-        const cityName = locationInput.value.trim();
-        const countryCode = countrySelect.value;
-
-        // Validate inputs
-        if (!countryCode) {
-          showError("Please select your country first");
-          return;
-        }
-
-        if (!cityName) {
-          showError("Please enter your city, town, or village");
-          return;
-        }
-
-        console.log(`🌍 Searching for weather: ${cityName} in ${countryCode}`);
-
-        // Show loading state
-        const button = document.getElementById("getWeatherBtn");
-        const btnText = document.getElementById("getWeatherBtnText");
-        if (button) {
-          const originalText = btnText.textContent;
-          button.innerHTML = '<div class="spinner mx-auto"></div>';
-          button.disabled = true;
-        }
-
-        hideError();
-
-        try {
-          // Set units based on country and user preference
-          if (userProfile.unitPreference !== 'auto') {
-            currentUnits = userProfile.unitPreference;
-          } else {
-            currentUnits = detectUnits(countryCode);
-          }
-          currentCountry = countryCode;
-
-          console.log(`🎛️ Using units: ${currentUnits} for country: ${countryCode}`);
-
-          // Try to find weather data for the location
-          const weatherResult = await findNearestCityWithWeather(cityName, countryCode);
-
-          if (weatherResult) {
-            // Get forecast data
-            let forecastData = null;
-            try {
-              const forecastUrl = `/api/weather?location=${encodeURIComponent(weatherResult.city + ',' + countryCode)}&type=forecast&units=${currentUnits}`;
-              const forecastResponse = await fetch(forecastUrl);
-              if (forecastResponse.ok) {
-                forecastData = await forecastResponse.json();
-              }
-            } catch (forecastError) {
-              console.log("⚠️ Forecast failed:", forecastError);
-            }
-
-            // Process forecast
-            const todaysForecast = forecastData
-              ? getTodaysForecast(forecastData)
-              : getSimpleForecast(weatherResult.data);
-
-            // Create display location name
-            let locationDisplay = weatherResult.city;
-            if (weatherResult.state) {
-              locationDisplay += `, ${weatherResult.state}`;
-            }
-            locationDisplay += `, ${weatherResult.country || getFullCountryName(countryCode)}`;
-
-            // Add note if not exact match
-            if (!weatherResult.isExact) {
-              locationDisplay += ` (nearest available)`;
-              console.log(`ℹ️ Using nearest city: ${weatherResult.city} instead of ${weatherResult.originalSearch}`);
-
-              // Show info message to user
-              showLocationNote(`Weather data for "${weatherResult.originalSearch}" not available. Showing data for nearest city: ${weatherResult.city}`);
-            }
-
-            const weatherData = {
-              location: locationDisplay,
-              temperature: Math.round(weatherResult.data.main.temp),
-              condition: weatherResult.data.weather[0].main,
-              humidity: weatherResult.data.main.humidity,
-              windSpeed: Math.round(weatherResult.data.wind?.speed || 0),
-              feelsLike: Math.round(weatherResult.data.main.feels_like),
-              forecast: todaysForecast,
-            };
-
-            displayWeather(weatherData);
-
-            // Save location for quick access
-            const saveLocation = `${cityName}, ${getFullCountryName(countryCode)}`;
-            savedLocation = saveLocation;
-            try {
-              localStorage.setItem("weatherWardrobeLocation", savedLocation);
-            } catch (e) {
-              console.log("Cannot save location");
-            }
-            updateUI();
-
-          } else {
-            throw new Error("No weather data available");
-          }
-
-        } catch (error) {
-          console.error("❌ Weather lookup failed:", error);
-
-          let errorMessage = `Unable to find weather data for "${cityName}" in ${getFullCountryName(countryCode)}. `;
-          errorMessage += "Please try:\n";
-          errorMessage += "• A larger nearby city\n";
-          errorMessage += "• Different spelling\n";
-          errorMessage += "• Official city name in English";
-
-          showError(errorMessage);
-        } finally {
-          // Reset button
-          if (button && btnText) {
-            button.innerHTML = '<span id="getWeatherBtnText">Get Clothing Advice</span>';
-            button.disabled = false;
-          }
-        }
-      }
-
-      function showLocationNote(message) {
-        // Create or update location note div
-        let noteDiv = document.getElementById('locationNote');
-        if (!noteDiv) {
-          noteDiv = document.createElement('div');
-          noteDiv.id = 'locationNote';
-          noteDiv.className = 'bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-blue-700 text-sm';
-
-          const errorDiv = document.getElementById('errorDiv');
-          errorDiv.parentNode.insertBefore(noteDiv, errorDiv);
-        }
-
-        noteDiv.textContent = message;
-        noteDiv.classList.remove('hidden');
-
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-          noteDiv.classList.add('hidden');
-        }, 5000);
-      }
-
-      function getFullCountryName(countryCode) {
-        const countryNames = {
-          'US': 'United States',
-          'CA': 'Canada',
-          'GB': 'United Kingdom',
-          'AU': 'Australia',
-          'DE': 'Germany',
-          'FR': 'France',
-          'ES': 'Spain',
-          'IT': 'Italy',
-          'NL': 'Netherlands',
-          'JP': 'Japan',
-          'KR': 'South Korea',
-          'IN': 'India',
-          'BR': 'Brazil',
-          'MX': 'Mexico',
-          'AR': 'Argentina',
-          'ZA': 'South Africa',
-          'NG': 'Nigeria',
-          'EG': 'Egypt',
-          'CN': 'China',
-          'TH': 'Thailand',
-          'SG': 'Singapore',
-          'NZ': 'New Zealand',
-          'NO': 'Norway',
-          'SE': 'Sweden',
-          'DK': 'Denmark',
-          'FI': 'Finland',
-          'IE': 'Ireland',
-          'CH': 'Switzerland',
-          'AT': 'Austria',
-          'BE': 'Belgium',
-          'PT': 'Portugal',
-          'GR': 'Greece',
-          'PL': 'Poland',
-          'CZ': 'Czech Republic',
-          'HU': 'Hungary',
-          'RO': 'Romania',
-          'BG': 'Bulgaria',
-          'HR': 'Croatia',
-          'SI': 'Slovenia',
-          'SK': 'Slovakia',
-          'LT': 'Lithuania',
-          'LV': 'Latvia',
-          'EE': 'Estonia',
-          'RU': 'Russia',
-          'UA': 'Ukraine',
-          'TR': 'Turkey',
-          'IL': 'Israel',
-          'AE': 'UAE',
-          'SA': 'Saudi Arabia'
-        };
-
-        return countryNames[countryCode] || countryCode;
-      }
-
-      function displayWeather(weather) {
-        console.log("🌡️ displayWeather called");
-        console.log("🌡️ userProfile.unitPreference:", userProfile.unitPreference);
-        console.log("🌡️ currentUnits:", currentUnits);
-        console.log("🌡️ Original weather data:", weather);
-
-        // Convert values if needed based on user preference
-        let displayTemp = weather.temperature;
-        let displayFeelsLike = weather.feelsLike;
-        let displayWindSpeed = weather.windSpeed;
-        let displayForecast = weather.forecast;
-
-        // Check for impossible temperature values (indicates API returned wrong units)
-        const impossibleMetric = userProfile.unitPreference === 'metric' && displayTemp > 50; // 50°C+ is impossible weather
-        const impossibleImperial = userProfile.unitPreference === 'imperial' && displayTemp < 10; // Below 10°F is very rare
-
-        console.log("🌡️ Temperature check - value:", displayTemp);
-        console.log("🌡️ Impossible metric (>50°C)?", impossibleMetric);
-        console.log("🌡️ Impossible imperial (<10°F)?", impossibleImperial);
-
-        // If user wants metric but we got imperial values, OR if temp values seem wrong, convert them
-        if ((userProfile.unitPreference === 'metric' && currentUnits === 'imperial') || impossibleMetric) {
-          if (impossibleMetric) {
-            console.log("🔄 FORCED conversion - API returned Fahrenheit values despite requesting Celsius!");
-          } else {
-            console.log("🔄 Converting imperial to metric for display");
-          }
-          console.log("��� Before conversion - temp:", displayTemp, "feelsLike:", displayFeelsLike, "wind:", displayWindSpeed);
-
-          displayTemp = fahrenheitToCelsius(weather.temperature);
-          displayFeelsLike = fahrenheitToCelsius(weather.feelsLike);
-          displayWindSpeed = mphToKmh(weather.windSpeed);
-
-          console.log("🔄 After conversion - temp:", displayTemp, "feelsLike:", displayFeelsLike, "wind:", displayWindSpeed);
-
-          if (displayForecast) {
-            console.log("🔄 Converting forecast - original high:", displayForecast.high, "low:", displayForecast.low);
-            displayForecast = {
-              ...displayForecast,
-              high: fahrenheitToCelsius(displayForecast.high),
-              low: fahrenheitToCelsius(displayForecast.low)
-            };
-            console.log("🔄 Converted forecast - high:", displayForecast.high, "low:", displayForecast.low);
-          }
-          currentUnits = 'metric'; // Update for formatting
-        }
-        // If user wants imperial but we got metric values, OR if temp values seem wrong, convert them
-        else if ((userProfile.unitPreference === 'imperial' && currentUnits === 'metric') || impossibleImperial) {
-          console.log("🔄 Converting metric to imperial for display");
-          displayTemp = celsiusToFahrenheit(weather.temperature);
-          displayFeelsLike = celsiusToFahrenheit(weather.feelsLike);
-          displayWindSpeed = displayWindSpeed / 1.60934; // km/h to mph
-
-          if (displayForecast) {
-            displayForecast = {
-              ...displayForecast,
-              high: celsiusToFahrenheit(displayForecast.high),
-              low: celsiusToFahrenheit(displayForecast.low)
-            };
-          }
-          currentUnits = 'imperial'; // Update for formatting
-        } else {
-          console.log("🔄 No conversion needed - userPref:", userProfile.unitPreference, "currentUnits:", currentUnits);
-        }
-
-        // Update weather info with converted values
-        document.getElementById("weatherLocation").textContent =
-          weather.location;
-        document.getElementById("weatherTemp").textContent =
-          formatTemperature(displayTemp);
-        document.getElementById("weatherCondition").textContent =
-          weather.condition;
-        document.getElementById("feelsLike").textContent =
-          formatTemperature(displayFeelsLike);
-        document.getElementById("humidity").textContent =
-          weather.humidity + "%";
-        document.getElementById("windSpeed").textContent =
-          formatWindSpeed(displayWindSpeed);
-
-        // Update weather icon
-        const iconContainer = document.getElementById("weatherIcon");
-        iconContainer.innerHTML = getWeatherIcon(weather.condition);
-
-        // Update today's forecast if available
-        const forecastContainer = document.getElementById("todaysForecast");
-        if (displayForecast) {
-          console.log("Displaying forecast:", displayForecast); // Debug log
-          let forecastHTML = `
-                    <div class="bg-blue-50 rounded-xl p-4 mt-4">
-                        <h4 class="font-semibold text-blue-800 mb-2">��� Today's Forecast</h4>
-                        <div class="grid grid-cols-2 gap-4 text-sm mb-3">
-                            <div class="text-center">
-                                <p class="text-blue-600">High</p>
-                                <p class="font-bold text-blue-800">${formatTemperature(displayForecast.high)}</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-blue-600">Low</p>
-                                <p class="font-bold text-blue-800">${formatTemperature(displayForecast.low)}</p>
-                            </div>
-                        </div>
-                `;
-
-          if (displayForecast.alerts && displayForecast.alerts.length > 0) {
-            forecastHTML += '<div class="space-y-1">';
-            displayForecast.alerts.forEach((alert) => {
-              forecastHTML += `<p class="text-blue-700 text-xs">⚠️ ${alert}</p>`;
-            });
-            forecastHTML += "</div>";
-          }
-
-          forecastHTML += "</div>";
-          forecastContainer.innerHTML = forecastHTML;
-          forecastContainer.classList.remove("hidden");
-        } else {
-          console.log("No forecast data to display"); // Debug log
-          forecastContainer.classList.add("hidden");
-        }
-
-        // Update clothing advice with detailed categorized recommendations using converted values
-        const advice = getClothingRecommendation(
-          displayTemp,
-          weather.condition,
-          displayForecast,
-        );
-
-        // The new system populates individual categories automatically
-
-        // Show personalized note if applicable
-        if (userProfile.hasLearned) {
-          document
-            .getElementById("personalizedNote")
-            .classList.remove("hidden");
-        }
-
-        // Show results
-        document.getElementById("weatherResults").classList.remove("hidden");
-      }
-
-      function getWeatherIcon(condition) {
-        const lowerCondition = condition.toLowerCase();
-        if (
-          lowerCondition.includes("rain") ||
-          lowerCondition.includes("drizzle")
-        ) {
-          return `<svg class="weather-icon text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M8 19v2m8-2v2m-4-3v2m-4-5v2"/>
-                </svg>`;
-        } else if (lowerCondition.includes("cloud")) {
-          return `<svg class="weather-icon text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
-                </svg>`;
-        } else {
-          return `<svg class="weather-icon text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>`;
-        }
-      }
-
-      function getClothingRecommendation(temp, condition, forecast) {
-        const lowerCondition = condition.toLowerCase();
-        let baseTemp = temp;
-
-        // Adjust temperature based on user preferences
-        if (userProfile.temperaturePreference === "runs-hot") {
-          baseTemp += 10;
-        } else if (userProfile.temperaturePreference === "runs-cold") {
-          baseTemp -= 10;
-        }
-
-        // Adjust for activity level
-        if (userProfile.activityLevel === "active") {
-          baseTemp += 5; // Active people get warmer
-        } else if (userProfile.activityLevel === "sedentary") {
-          baseTemp -= 3; // Sedentary people might feel cooler
-        }
-
-        // Get detailed recommendations by category
-        const recommendations = getDetailedClothingRecommendations(
-          baseTemp,
-          lowerCondition,
-          forecast,
-        );
-
-        // Update each category in the UI
-        const topEl = document.getElementById("topRecommendation");
-        const bottomEl = document.getElementById("bottomRecommendation");
-        const footwearEl = document.getElementById("footwearRecommendation");
-        const accessoriesEl = document.getElementById(
-          "accessoriesRecommendation",
-        );
-        const alertDiv = document.getElementById("weatherAlerts");
-        const alertText = document.getElementById("weatherAlertText");
-
-        console.log("Elements found:", {
-          topEl: !!topEl,
-          bottomEl: !!bottomEl,
-          footwearEl: !!footwearEl,
-          accessoriesEl: !!accessoriesEl,
-          alertDiv: !!alertDiv,
-          alertText: !!alertText,
-        });
-
-        if (topEl) topEl.textContent = recommendations.top;
-        if (bottomEl) bottomEl.textContent = recommendations.bottom;
-        if (footwearEl) footwearEl.textContent = recommendations.footwear;
-        if (accessoriesEl)
-          accessoriesEl.textContent = recommendations.accessories;
-
-        // Handle weather alerts
-        if (recommendations.alerts && recommendations.alerts.length > 0) {
-          alertText.textContent = recommendations.alerts.join(" ");
-          alertDiv.classList.remove("hidden");
-        } else {
-          alertDiv.classList.add("hidden");
-        }
-
-        // Return a summary for backward compatibility
-        return `${recommendations.top} ${recommendations.bottom} ${recommendations.footwear}`;
-      }
-
-      function showError(message) {
-        document.getElementById("errorText").textContent = message;
-        document.getElementById("errorDiv").classList.remove("hidden");
-      }
-
-      function hideError() {
-        document.getElementById("errorDiv").classList.add("hidden");
-      }
-
-      // Location autocomplete functionality
-      let searchTimeout;
-      let selectedLocation = null;
-      let recentLocations = [];
-
-      function handleLocationInput(value) {
-        clearTimeout(searchTimeout);
-        const trimmedValue = value.trim();
-
-        console.log("🎯 Location input:", value, "trimmed:", trimmedValue);
-
-        // Validate button state
-        validateLocationAndEnableButton();
-
-        if (trimmedValue.length === 0) {
-          hideLocationSuggestions();
-          selectedLocation = null;
-          return;
-        }
-
-        // Reset selected location when user types new input
-        selectedLocation = null;
-
-        // If it looks like a complete zip code, don't search for suggestions but show it as an option
-        if (/^\d{5}(-\d{4})?$/.test(trimmedValue)) {
-          console.log("📮 Detected complete zip code:", trimmedValue);
-          showZipCodeSuggestion(trimmedValue);
-          return;
-        }
-
-        // Debounce search requests - but only search if country is selected
-        if (selectedCountry) {
-          searchTimeout = setTimeout(() => {
-            if (trimmedValue.length >= 2) {
-              console.log(`🔍 Starting search for: ${trimmedValue} in ${selectedCountry}`);
-              searchLocations(trimmedValue);
-            }
-          }, 300);
-        } else {
-          hideLocationSuggestions();
-        }
-      }
-
-      // Show zip code as a suggestion
-      function showZipCodeSuggestion(zipCode) {
-        const suggestionsList = document.getElementById("suggestionsList");
-        const suggestionsContainer = document.getElementById("locationSuggestions");
-
-        const zipLocation = {
-          name: zipCode,
-          country: 'US',
-          isZipCode: true
-        };
-
-        displayLocationSuggestions([zipLocation]);
-      }
-
-      // Global variables for location management
-      let currentUserCountry = null;
-      // Selected country and location state
-      let selectedCountry = "";
-      let selectedLocation = null;
-
-      // Country-first location selection functions
       function handleCountrySelection(countryCode) {
         console.log("🌍 Country selected:", countryCode);
-        alert("Country selection function called: " + countryCode);
         selectedCountry = countryCode;
 
         const cityContainer = document.getElementById('cityInputContainer');
@@ -2193,642 +1525,56 @@
         }
       }
 
-      async function findNearestCityWithWeather(cityName, countryCode) {
-        console.log(`🔍 Searching for weather data for ${cityName} in ${countryCode}`);
+      function handleLocationInput(value) {
+        clearTimeout(searchTimeout);
+        const trimmedValue = value.trim();
 
-        try {
-          // First, try the exact city name
-          const searchQuery = `${cityName},${countryCode}`;
-          const weatherUrl = `/api/weather?location=${encodeURIComponent(searchQuery)}&units=${currentUnits}`;
-          const response = await fetch(weatherUrl);
+        console.log("🎯 Location input:", value, "trimmed:", trimmedValue);
 
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`✅ Found weather data for ${cityName}`);
-            return { city: cityName, data: data, isExact: true };
-          }
+        // Validate button state
+        validateLocationAndEnableButton();
 
-          // If exact match fails, try to find nearby cities using geocoding
-          console.log(`⚠️ No exact match for ${cityName}, searching for nearby cities...`);
+        if (trimmedValue.length === 0) {
+          hideLocationSuggestions();
+          selectedLocation = null;
+          return;
+        }
 
-          const geocodingUrl = `/api/geocoding?q=${encodeURIComponent(cityName + ',' + countryCode)}&limit=5`;
-          const geoResponse = await fetch(geocodingUrl);
+        // Reset selected location when user types new input
+        selectedLocation = null;
 
-          if (geoResponse.ok) {
-            const locations = await geoResponse.json();
+        // If it looks like a complete zip code, don't search for suggestions but show it as an option
+        if (/^\d{5}(-\d{4})?$/.test(trimmedValue)) {
+          console.log("📮 Detected complete zip code:", trimmedValue);
+          showZipCodeSuggestion(trimmedValue);
+          return;
+        }
 
-            // Try each location returned by geocoding
-            for (const location of locations) {
-              try {
-                const nearbyWeatherUrl = `/api/weather?lat=${location.lat}&lon=${location.lon}&units=${currentUnits}`;
-                const nearbyResponse = await fetch(nearbyWeatherUrl);
-
-                if (nearbyResponse.ok) {
-                  const nearbyData = await nearbyResponse.json();
-                  console.log(`✅ Found weather data for nearby city: ${location.name}`);
-                  return {
-                    city: location.name,
-                    state: location.state,
-                    country: location.country,
-                    data: nearbyData,
-                    isExact: false,
-                    originalSearch: cityName
-                  };
-                }
-              } catch (nearbyError) {
-                console.log(`❌ Failed to get weather for ${location.name}:`, nearbyError);
-                continue;
-              }
+        // Debounce search requests - but only search if country is selected
+        if (selectedCountry) {
+          searchTimeout = setTimeout(() => {
+            if (trimmedValue.length >= 2) {
+              console.log(`🔍 Starting search for: ${trimmedValue} in ${selectedCountry}`);
+              searchLocations(trimmedValue);
             }
-          }
-
-          throw new Error(`No weather data available for ${cityName} or nearby areas`);
-
-        } catch (error) {
-          console.error(`❌ Error finding weather data for ${cityName}:`, error);
-          throw error;
+          }, 300);
+        } else {
+          hideLocationSuggestions();
         }
       }
 
-      async function searchLocations(query) {
+      // Show zip code as a suggestion
+      function showZipCodeSuggestion(zipCode) {
         const suggestionsList = document.getElementById("suggestionsList");
-        const loadingDiv = document.getElementById("loadingSuggestion");
         const suggestionsContainer = document.getElementById("locationSuggestions");
 
-        if (query.trim().length < 2 || !selectedCountry) {
-          suggestionsContainer.classList.add("hidden");
-          return;
-        }
-
-        // Show loading state
-        suggestionsList.innerHTML = "";
-        loadingDiv.classList.remove("hidden");
-        suggestionsContainer.classList.remove("hidden");
-
-        console.log(`🔍 Searching for locations: "${query}" in ${selectedCountry}`);
-
-        try {
-          // Use OpenWeather geocoding API to search within the selected country
-          const searchQuery = `${query.trim()},${selectedCountry}`;
-          const geocodingUrl = `/api/geocoding?q=${encodeURIComponent(searchQuery)}&limit=5`;
-
-          const response = await fetch(geocodingUrl);
-          let locations = [];
-
-          if (response.ok) {
-            locations = await response.json();
-            console.log(`🔍 OpenWeather found ${locations.length} suggestions for "${query}" in ${selectedCountry}`);
-          } else {
-            console.log('⚠️ OpenWeather geocoding failed, using fallback');
-            // Fallback to simple text matching
-            locations = createSimpleFallbackSuggestions(query, selectedCountry);
-          }
-
-          if (locations.length > 0) {
-            displayLocationSuggestions(locations);
-          } else {
-            const countryName = getFullCountryName(selectedCountry);
-            suggestionsList.innerHTML = `
-              <div class="px-4 py-2 text-sm text-gray-500">
-                <div class="font-medium mb-1">No locations found for "${query}"</div>
-                <div class="text-xs">
-                  💡 Try a larger nearby city in ${countryName}
-                </div>
-              </div>
-            `;
-          }
-        } catch (error) {
-          console.error('🔍 Search error:', error);
-          const countryName = getFullCountryName(selectedCountry);
-          suggestionsList.innerHTML = `
-            <div class="px-4 py-2 text-sm text-gray-500">
-              <div class="font-medium mb-1">Unable to search locations</div>
-              <div class="text-xs">Try a major city name in ${countryName}</div>
-            </div>
-          `;
-        }
-
-        loadingDiv.classList.add("hidden");
-      }
-
-      function createSimpleFallbackSuggestions(query, countryCode) {
-        // Simple fallback suggestions for major cities when API fails
-        const majorCities = {
-          'US': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'],
-          'CA': ['Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Ottawa', 'Edmonton', 'Mississauga', 'Winnipeg', 'Quebec City', 'Hamilton'],
-          'GB': ['London', 'Birmingham', 'Manchester', 'Liverpool', 'Sheffield', 'Bristol', 'Glasgow', 'Leicester', 'Edinburgh', 'Leeds'],
-          'AU': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Gold Coast', 'Newcastle', 'Canberra', 'Wollongong', 'Logan'],
-          'DE': ['Berlin', 'Hamburg', 'Munich', 'Cologne', 'Frankfurt', 'Stuttgart', 'Düsseldorf', 'Dortmund', 'Essen', 'Leipzig'],
-          'FR': ['Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier', 'Bordeaux', 'Lille'],
-          'ES': ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Zaragoza', 'Málaga', 'Murcia', 'Palma', 'Las Palmas', 'Bilbao'],
-          'IT': ['Rome', 'Milan', 'Naples', 'Turin', 'Palermo', 'Genoa', 'Bologna', 'Florence', 'Bari', 'Catania']
+        const zipLocation = {
+          name: zipCode,
+          country: 'US',
+          isZipCode: true
         };
 
-        const cities = majorCities[countryCode] || [];
-        const queryLower = query.toLowerCase();
-
-        return cities
-          .filter(city => city.toLowerCase().includes(queryLower))
-          .slice(0, 3)
-          .map(city => ({
-            name: city,
-            country: countryCode,
-            state: null,
-            lat: null,
-            lon: null,
-            isFallback: true
-          }));
-      }
-
-      // Fix common typing mistakes
-      function fixCommonTypos(query) {
-        const corrections = {
-          'riverisde': 'riverside',
-          'riveside': 'riverside',
-          'philadelpia': 'philadelphia',
-          'pittsburg': 'pittsburgh',
-          'detrooit': 'detroit',
-          'atlana': 'atlanta',
-          'chigaco': 'chicago',
-          'huston': 'houston',
-          'phoneix': 'phoenix',
-          'mimai': 'miami',
-          'delraan': 'delran',
-          'delarn': 'delran',
-          'camdem': 'camden',
-          'tretnon': 'trenton'
-        };
-
-        const lowerQuery = query.toLowerCase();
-        const corrected = corrections[lowerQuery] || query;
-
-        if (corrected !== query) {
-          console.log(`🔤 Auto-corrected "${query}" to "${corrected}"`);
-        }
-
-        return corrected;
-      }
-
-      // Create smart location suggestions without relying on broken APIs
-      function createSmartLocationSuggestions(query) {
-        const locations = [];
-        const lowerQuery = query.toLowerCase().trim();
-
-        // Handle ZIP codes first
-        if (/^\d{5}(-\d{4})?$/.test(query.trim())) {
-          locations.push({
-            name: query.trim(),
-            country: 'US',
-            isZipCode: true,
-            lat: null,
-            lon: null
-          });
-          return locations;
-        }
-
-        // Comprehensive location database for instant suggestions
-        const locationDB = {
-          // New Jersey cities
-          'riverside': [
-            { name: 'Riverside', state: 'New Jersey', country: 'US', popular: true },
-            { name: 'Riverside', state: 'California', country: 'US', popular: false }
-          ],
-          'delran': [
-            { name: 'Delran', state: 'New Jersey', country: 'US', popular: true }
-          ],
-          'newark': [
-            { name: 'Newark', state: 'New Jersey', country: 'US', popular: true },
-            { name: 'Newark', state: 'Delaware', country: 'US', popular: false }
-          ],
-          'trenton': [
-            { name: 'Trenton', state: 'New Jersey', country: 'US', popular: true }
-          ],
-          'camden': [
-            { name: 'Camden', state: 'New Jersey', country: 'US', popular: true }
-          ],
-          'jersey city': [
-            { name: 'Jersey City', state: 'New Jersey', country: 'US', popular: true }
-          ],
-          'paterson': [
-            { name: 'Paterson', state: 'New Jersey', country: 'US', popular: true }
-          ],
-
-          // Major US cities
-          'new york': [
-            { name: 'New York', state: 'New York', country: 'US', popular: true }
-          ],
-          'philadelphia': [
-            { name: 'Philadelphia', state: 'Pennsylvania', country: 'US', popular: true }
-          ],
-          'boston': [
-            { name: 'Boston', state: 'Massachusetts', country: 'US', popular: true }
-          ],
-          'chicago': [
-            { name: 'Chicago', state: 'Illinois', country: 'US', popular: true }
-          ],
-          'los angeles': [
-            { name: 'Los Angeles', state: 'California', country: 'US', popular: true }
-          ],
-          'miami': [
-            { name: 'Miami', state: 'Florida', country: 'US', popular: true }
-          ],
-
-          // International cities (travel-friendly)
-          'paris': [
-            { name: 'Paris', state: '', country: 'France', popular: true }
-          ],
-          'london': [
-            { name: 'London', state: '', country: 'United Kingdom', popular: true }
-          ],
-          'tokyo': [
-            { name: 'Tokyo', state: '', country: 'Japan', popular: true }
-          ],
-          'toronto': [
-            { name: 'Toronto', state: 'Ontario', country: 'Canada', popular: true }
-          ]
-        };
-
-        // Check for direct matches
-        if (locationDB[lowerQuery]) {
-          locationDB[lowerQuery].forEach(loc => {
-            locations.push({
-              name: loc.name,
-              state: loc.state,
-              country: loc.country,
-              lat: null,
-              lon: null,
-              verified: true,
-              popular: loc.popular
-            });
-          });
-        }
-
-        // Check for partial matches if no direct match
-        if (locations.length === 0) {
-          Object.keys(locationDB).forEach(key => {
-            if (key.includes(lowerQuery) || lowerQuery.includes(key)) {
-              locationDB[key].forEach(loc => {
-                locations.push({
-                  name: loc.name,
-                  state: loc.state,
-                  country: loc.country,
-                  lat: null,
-                  lon: null,
-                  verified: true,
-                  popular: loc.popular,
-                  partialMatch: true
-                });
-              });
-            }
-          });
-        }
-
-        // If still no matches, create a generic suggestion
-        if (locations.length === 0) {
-          // Check if it looks like "City, State" format
-          if (query.includes(',')) {
-            const parts = query.split(',').map(p => p.trim());
-            locations.push({
-              name: parts[0],
-              state: parts[1],
-              country: 'US',
-              lat: null,
-              lon: null,
-              verified: false,
-              userInput: true
-            });
-          } else {
-            // Suggest adding state for US cities
-            locations.push({
-              name: query,
-              state: '',
-              country: 'Unknown',
-              lat: null,
-              lon: null,
-              verified: false,
-              needsState: true
-            });
-          }
-        }
-
-        return locations;
-      }
-
-      // Enhanced geocoding API search with proper error handling
-      async function tryGeocodingAPISearch(searchQuery, locationsArray) {
-        try {
-          console.log(`🌍 Geocoding API search for: "${searchQuery}"`);
-
-          const response = await fetch(`/api/geocoding?q=${encodeURIComponent(searchQuery)}&limit=8`);
-
-          if (response.ok) {
-            const apiLocations = await response.json();
-            console.log(`✅ Geocoding API returned ${apiLocations.length} results`);
-
-            // Add each location with enhanced information
-            apiLocations.forEach(location => {
-              locationsArray.push({
-                name: location.name,
-                state: location.state,
-                country: location.country,
-                lat: location.lat,
-                lon: location.lon,
-                verified: true
-              });
-            });
-
-          } else {
-            console.warn(`⚠️ Geocoding API failed: ${response.status}`);
-          }
-        } catch (error) {
-          console.log(`❌ Geocoding API error for "${searchQuery}":`, error.message);
-        }
-      }
-
-      // Prioritize location results based on user preferences and relevance
-      function prioritizeLocationResults(locations, originalQuery) {
-        const countryPref = userProfile.countryPreference || 'auto';
-        const queryLower = originalQuery.toLowerCase();
-
-        return locations.sort((a, b) => {
-          // Priority 1: Exact name match
-          const aExact = a.name.toLowerCase() === queryLower;
-          const bExact = b.name.toLowerCase() === queryLower;
-          if (aExact && !bExact) return -1;
-          if (!aExact && bExact) return 1;
-
-          // Priority 2: Country preference
-          if (countryPref !== 'auto') {
-            const aCountryMatch = a.country === countryPref;
-            const bCountryMatch = b.country === countryPref;
-            if (aCountryMatch && !bCountryMatch) return -1;
-            if (!aCountryMatch && bCountryMatch) return 1;
-          }
-
-          // Priority 3: US locations (if no specific preference)
-          if (countryPref === 'auto') {
-            const aUS = a.country === 'US';
-            const bUS = b.country === 'US';
-            if (aUS && !bUS) return -1;
-            if (!aUS && bUS) return 1;
-          }
-
-          // Priority 4: Locations with state information
-          const aHasState = a.state && a.state !== 'Unknown';
-          const bHasState = b.state && b.state !== 'Unknown';
-          if (aHasState && !bHasState) return -1;
-          if (!aHasState && bHasState) return 1;
-
-          // Priority 5: Alphabetical by name
-          return a.name.localeCompare(b.name);
-        });
-      }
-
-      // Smart prioritization for location results
-      function smartPrioritizeLocations(locations, originalQuery) {
-        console.log("🎯 Prioritizing locations for query:", originalQuery);
-
-        const countryPref = userProfile.countryPreference || 'auto';
-        const queryLower = originalQuery.toLowerCase();
-
-        return locations.sort((a, b) => {
-          // Priority 1: Exact name match
-          const aExact = a.name.toLowerCase() === queryLower;
-          const bExact = b.name.toLowerCase() === queryLower;
-          if (aExact && !bExact) return -1;
-          if (!aExact && bExact) return 1;
-
-          // Priority 2: Verified locations over fallbacks
-          if (a.verified && !b.verified) return -1;
-          if (!a.verified && b.verified) return 1;
-
-          // Priority 3: Country preference (but don't exclude others)
-          if (countryPref !== 'auto') {
-            const aCountryMatch = a.country === countryPref;
-            const bCountryMatch = b.country === countryPref;
-            if (aCountryMatch && !bCountryMatch) return -1;
-            if (!aCountryMatch && bCountryMatch) return 1;
-          }
-
-          // Priority 4: US locations (if no specific preference) - helps local users
-          if (countryPref === 'auto') {
-            const aUS = a.country === 'US';
-            const bUS = b.country === 'US';
-            if (aUS && !bUS) return -1;
-            if (!aUS && bUS) return 1;
-          }
-
-          // Priority 5: Locations with state information (more specific)
-          const aHasState = a.state && a.state !== 'Unknown';
-          const bHasState = b.state && b.state !== 'Unknown';
-          if (aHasState && !bHasState) return -1;
-          if (!aHasState && bHasState) return 1;
-
-          // Priority 6: Alphabetical by name
-          return a.name.localeCompare(b.name);
-        });
-      }
-
-      // Add enhanced search strategies for small towns and difficult-to-find locations
-      async function tryEnhancedSmallTownSearch(originalQuery, locationsArray) {
-        // If we still haven't found results, try some enhanced strategies
-        if (locationsArray.length === 0) {
-          console.log(`🔍 Trying enhanced search strategies for: "${originalQuery}"`);
-
-          // Strategy: Try with common state abbreviations for NJ (since user mentioned Delran, NJ)
-          const commonNJSearches = [
-            `${originalQuery}, NJ`,
-            `${originalQuery}, New Jersey`,
-            `${originalQuery}, New Jersey, US`
-          ];
-
-          for (const searchTerm of commonNJSearches) {
-            await tryGeocodingAPISearch(searchTerm, locationsArray);
-            if (locationsArray.length > 0) {
-              console.log(`✅ Found results with enhanced search: "${searchTerm}"`);
-              break;
-            }
-          }
-
-          // If still no results and user has a country preference, try other common formats
-          if (locationsArray.length === 0) {
-            const countryPref = userProfile.countryPreference;
-            if (countryPref && countryPref !== 'auto') {
-              const enhancedSearches = [
-                `${originalQuery}, ${countryPref}`,
-                `${originalQuery} ${countryPref}`,
-                `${originalQuery} city, ${countryPref}`
-              ];
-
-              for (const searchTerm of enhancedSearches) {
-                await tryGeocodingAPISearch(searchTerm, locationsArray);
-                if (locationsArray.length > 0) {
-                  console.log(`✅ Found results with country-specific search: "${searchTerm}"`);
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      function displayLocationSuggestions(locations) {
-        const suggestionsList = document.getElementById("suggestionsList");
-        const suggestionsContainer = document.getElementById(
-          "locationSuggestions",
-        );
-
-        suggestionsList.innerHTML = "";
-
-        if (locations.length === 0) {
-          suggestionsList.innerHTML =
-            '<div class="px-4 py-2 text-sm text-gray-500">No locations found</div>';
-          return;
-        }
-
-        // Group locations by name to highlight duplicates
-        const locationGroups = {};
-        locations.forEach(location => {
-          const name = location.name;
-          if (!locationGroups[name]) {
-            locationGroups[name] = [];
-          }
-          locationGroups[name].push(location);
-        });
-
-        locations.forEach((location) => {
-          const displayName = formatLocationName(location);
-          const suggestionItem = document.createElement("div");
-          suggestionItem.className = "suggestion-item text-sm";
-
-          // Create status and detail text
-          let statusText = "";
-          let statusClass = "text-xs text-gray-500";
-
-          // Check if this is a duplicate name (multiple locations with same name)
-          const isDuplicate = locationGroups[location.name].length > 1;
-
-          if (location.isZipCode) {
-            statusText = "📮 ZIP Code";
-            statusClass = "text-xs text-blue-600";
-          } else if (location.popular) {
-            statusText = "⭐ Popular location";
-            statusClass = "text-xs text-green-600";
-          } else if (location.verified) {
-            if (isDuplicate) {
-              // For duplicates, emphasize the state/country difference
-              statusText = "📍 Multiple locations - choose your region";
-              statusClass = "text-xs text-blue-600";
-            } else {
-              statusText = "✅ Found location";
-              statusClass = "text-xs text-green-600";
-            }
-          } else if (location.partialMatch) {
-            statusText = "🔍 Similar location";
-            statusClass = "text-xs text-purple-600";
-          } else if (location.needsState) {
-            statusText = "💡 Try adding state (e.g., \"" + location.name + ", NJ\")";
-            statusClass = "text-xs text-orange-600";
-          } else if (location.userInput) {
-            statusText = "��� As entered";
-            statusClass = "text-xs text-gray-600";
-          } else {
-            statusText = "📍 Location";
-            statusClass = "text-xs text-gray-600";
-          }
-
-          // Highlight duplicate names differently
-          const nameClass = isDuplicate ? "font-semibold text-gray-900" : "font-medium text-gray-900";
-
-          suggestionItem.innerHTML = `
-            <div class="${nameClass}">${displayName}</div>
-            <div class="${statusClass}">${statusText}</div>
-          `;
-
-          suggestionItem.onclick = () => selectLocation(location, displayName);
-          suggestionsList.appendChild(suggestionItem);
-        });
-
-        // Add helpful tip if there are duplicate names
-        const duplicateNames = Object.keys(locationGroups).filter(name => locationGroups[name].length > 1);
-        if (duplicateNames.length > 0) {
-          const tipDiv = document.createElement("div");
-          tipDiv.className = "px-4 py-2 bg-blue-50 border-t border-blue-200";
-          tipDiv.innerHTML = `
-            <div class="text-xs text-blue-700">
-              💡 Multiple locations found. Choose the one in your state/region.
-            </div>
-          `;
-          suggestionsList.appendChild(tipDiv);
-        }
-
-        suggestionsContainer.classList.remove("hidden");
-      }
-
-      // Deprecated function removed - now using OpenWeather Geocoding API exclusively
-
-      function formatLocationName(location) {
-        console.log("📍 Formatting location:", location);
-
-        if (!location || !location.name) {
-          console.warn("⚠️ Invalid location object:", location);
-          return "Unknown Location";
-        }
-
-        // Handle zip codes
-        if (location.isZipCode) {
-          return `${location.name} (ZIP Code)`;
-        }
-
-        // Handle US locations with state (show full state name)
-        if (location.country === 'US' && location.state && location.state !== 'Unknown') {
-          const fullStateName = getFullStateName(location.state);
-          return `${location.name}, ${fullStateName}`;
-        }
-        // Handle non-US locations with state/province
-        else if (location.state && location.state !== 'Unknown' && location.country !== 'US') {
-          return `${location.name}, ${location.state}, ${location.country}`;
-        }
-        // Handle locations with country only
-        else if (location.country && location.country !== 'Unknown') {
-          // For US locations without state, still show US for clarity
-          if (location.country === 'US') {
-            return `${location.name}, United States`;
-          }
-          return `${location.name}, ${getFullCountryName(location.country)}`;
-        }
-
-        // Default to just the name
-        return location.name;
-      }
-
-      // Convert state abbreviations to full names
-      function getFullStateName(stateCode) {
-        const stateNames = {
-          'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
-          'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
-          'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
-          'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
-          'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
-          'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
-          'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
-          'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
-          'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
-          'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
-          'DC': 'Washington D.C.'
-        };
-        return stateNames[stateCode] || stateCode;
-      }
-
-      // Convert country codes to full names for common countries
-      function getFullCountryName(countryCode) {
-        const countryNames = {
-          'US': 'United States', 'CA': 'Canada', 'GB': 'United Kingdom', 'AU': 'Australia',
-          'DE': 'Germany', 'FR': 'France', 'ES': 'Spain', 'IT': 'Italy', 'NL': 'Netherlands',
-          'JP': 'Japan', 'KR': 'South Korea', 'IN': 'India', 'BR': 'Brazil', 'MX': 'Mexico',
-          'AR': 'Argentina', 'ZA': 'South Africa', 'NG': 'Nigeria', 'EG': 'Egypt', 'CN': 'China'
-        };
-        return countryNames[countryCode] || countryCode;
+        displayLocationSuggestions([zipLocation]);
       }
 
       function selectLocation(location, displayName) {
@@ -2838,6 +1584,9 @@
 
         // Add to recent locations
         addToRecentLocations(location, displayName);
+        
+        // Validate and enable button
+        validateLocationAndEnableButton();
       }
 
       function addToRecentLocations(location, displayName) {
@@ -2908,6 +1657,768 @@
         document.getElementById("locationSuggestions").classList.add("hidden");
       }
 
+      function showLocationNote(message) {
+        // Create or update location note div
+        let noteDiv = document.getElementById('locationNote');
+        if (!noteDiv) {
+          noteDiv = document.createElement('div');
+          noteDiv.id = 'locationNote';
+          noteDiv.className = 'bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-blue-700 text-sm';
+
+          const errorDiv = document.getElementById('errorDiv');
+          errorDiv.parentNode.insertBefore(noteDiv, errorDiv);
+        }
+
+        noteDiv.textContent = message;
+        noteDiv.classList.remove('hidden');
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          noteDiv.classList.add('hidden');
+        }, 5000);
+      }
+
+      function showError(message) {
+        document.getElementById("errorText").textContent = message;
+        document.getElementById("errorDiv").classList.remove("hidden");
+      }
+
+      function hideError() {
+        document.getElementById("errorDiv").classList.add("hidden");
+      }
+      async function searchLocations(query) {
+        const suggestionsList = document.getElementById("suggestionsList");
+        const loadingDiv = document.getElementById("loadingSuggestion");
+        const suggestionsContainer = document.getElementById("locationSuggestions");
+
+        if (query.trim().length < 2 || !selectedCountry) {
+          suggestionsContainer.classList.add("hidden");
+          return;
+        }
+
+        // Show loading state
+        suggestionsList.innerHTML = "";
+        loadingDiv.classList.remove("hidden");
+        suggestionsContainer.classList.remove("hidden");
+
+        console.log(`🔍 Searching for locations: "${query}" in ${selectedCountry}`);
+
+        try {
+          // Use OpenWeather geocoding API to search within the selected country
+          const searchQuery = `${query.trim()},${selectedCountry}`;
+          const geocodingUrl = `${GEO_API_BASE}/direct?q=${encodeURIComponent(searchQuery)}&limit=5&appid=${API_KEY}`;
+
+          const response = await fetch(geocodingUrl);
+          let locations = [];
+
+          if (response.ok) {
+            locations = await response.json();
+            console.log(`🔍 OpenWeather found ${locations.length} suggestions for "${query}" in ${selectedCountry}`);
+          } else {
+            console.log('⚠️ OpenWeather geocoding failed, using fallback');
+            // Fallback to simple text matching
+            locations = createSimpleFallbackSuggestions(query, selectedCountry);
+          }
+
+          if (locations.length > 0) {
+            displayLocationSuggestions(locations);
+          } else {
+            const countryName = getFullCountryName(selectedCountry);
+            suggestionsList.innerHTML = `
+              <div class="px-4 py-2 text-sm text-gray-500">
+                <div class="font-medium mb-1">No locations found for "${query}"</div>
+                <div class="text-xs">
+                  💡 Try a larger nearby city in ${countryName}
+                </div>
+              </div>
+            `;
+          }
+        } catch (error) {
+          console.error('🔍 Search error:', error);
+          const countryName = getFullCountryName(selectedCountry);
+          suggestionsList.innerHTML = `
+            <div class="px-4 py-2 text-sm text-gray-500">
+              <div class="font-medium mb-1">Unable to search locations</div>
+              <div class="text-xs">Try a major city name in ${countryName}</div>
+            </div>
+          `;
+        }
+
+        loadingDiv.classList.add("hidden");
+      }
+
+      function createSimpleFallbackSuggestions(query, countryCode) {
+        // Simple fallback suggestions for major cities when API fails
+        const majorCities = {
+          'US': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'],
+          'CA': ['Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Ottawa', 'Edmonton', 'Mississauga', 'Winnipeg', 'Quebec City', 'Hamilton'],
+          'GB': ['London', 'Birmingham', 'Manchester', 'Liverpool', 'Sheffield', 'Bristol', 'Glasgow', 'Leicester', 'Edinburgh', 'Leeds'],
+          'AU': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Gold Coast', 'Newcastle', 'Canberra', 'Wollongong', 'Logan'],
+          'DE': ['Berlin', 'Hamburg', 'Munich', 'Cologne', 'Frankfurt', 'Stuttgart', 'Düsseldorf', 'Dortmund', 'Essen', 'Leipzig'],
+          'FR': ['Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier', 'Bordeaux', 'Lille'],
+          'ES': ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Zaragoza', 'Málaga', 'Murcia', 'Palma', 'Las Palmas', 'Bilbao'],
+          'IT': ['Rome', 'Milan', 'Naples', 'Turin', 'Palermo', 'Genoa', 'Bologna', 'Florence', 'Bari', 'Catania']
+        };
+
+        const cities = majorCities[countryCode] || [];
+        const queryLower = query.toLowerCase();
+
+        return cities
+          .filter(city => city.toLowerCase().includes(queryLower))
+          .slice(0, 3)
+          .map(city => ({
+            name: city,
+            country: countryCode,
+            state: null,
+            lat: null,
+            lon: null,
+            isFallback: true
+          }));
+      }
+
+      function displayLocationSuggestions(locations) {
+        const suggestionsList = document.getElementById("suggestionsList");
+        const suggestionsContainer = document.getElementById(
+          "locationSuggestions",
+        );
+
+        suggestionsList.innerHTML = "";
+
+        if (locations.length === 0) {
+          suggestionsList.innerHTML =
+            '<div class="px-4 py-2 text-sm text-gray-500">No locations found</div>';
+          return;
+        }
+
+        // Group locations by name to highlight duplicates
+        const locationGroups = {};
+        locations.forEach(location => {
+          const name = location.name;
+          if (!locationGroups[name]) {
+            locationGroups[name] = [];
+          }
+          locationGroups[name].push(location);
+        });
+
+        locations.forEach((location) => {
+          const displayName = formatLocationName(location);
+          const suggestionItem = document.createElement("div");
+          suggestionItem.className = "suggestion-item text-sm";
+
+          // Create status and detail text
+          let statusText = "";
+          let statusClass = "text-xs text-gray-500";
+
+          // Check if this is a duplicate name (multiple locations with same name)
+          const isDuplicate = locationGroups[location.name].length > 1;
+
+          if (location.isZipCode) {
+            statusText = "📮 ZIP Code";
+            statusClass = "text-xs text-blue-600";
+          } else if (location.popular) {
+            statusText = "⭐ Popular location";
+            statusClass = "text-xs text-green-600";
+          } else if (location.verified) {
+            if (isDuplicate) {
+              // For duplicates, emphasize the state/country difference
+              statusText = "📍 Multiple locations - choose your region";
+              statusClass = "text-xs text-blue-600";
+            } else {
+              statusText = "✅ Found location";
+              statusClass = "text-xs text-green-600";
+            }
+          } else if (location.partialMatch) {
+            statusText = "🔍 Similar location";
+            statusClass = "text-xs text-purple-600";
+          } else if (location.needsState) {
+            statusText = "💡 Try adding state (e.g., \"" + location.name + ", NJ\")";
+            statusClass = "text-xs text-orange-600";
+          } else if (location.userInput) {
+            statusText = "📝 As entered";
+            statusClass = "text-xs text-gray-600";
+          } else {
+            statusText = "📍 Location";
+            statusClass = "text-xs text-gray-600";
+          }
+
+          // Highlight duplicate names differently
+          const nameClass = isDuplicate ? "font-semibold text-gray-900" : "font-medium text-gray-900";
+
+          suggestionItem.innerHTML = `
+            <div class="${nameClass}">${displayName}</div>
+            <div class="${statusClass}">${statusText}</div>
+          `;
+
+          suggestionItem.onclick = () => selectLocation(location, displayName);
+          suggestionsList.appendChild(suggestionItem);
+        });
+
+        // Add helpful tip if there are duplicate names
+        const duplicateNames = Object.keys(locationGroups).filter(name => locationGroups[name].length > 1);
+        if (duplicateNames.length > 0) {
+          const tipDiv = document.createElement("div");
+          tipDiv.className = "px-4 py-2 bg-blue-50 border-t border-blue-200";
+          tipDiv.innerHTML = `
+            <div class="text-xs text-blue-700">
+              💡 Multiple locations found. Choose the one in your state/region.
+            </div>
+          `;
+          suggestionsList.appendChild(tipDiv);
+        }
+
+        suggestionsContainer.classList.remove("hidden");
+      }
+
+      function formatLocationName(location) {
+        console.log("📍 Formatting location:", location);
+
+        if (!location || !location.name) {
+          console.warn("⚠️ Invalid location object:", location);
+          return "Unknown Location";
+        }
+
+        // Handle zip codes
+        if (location.isZipCode) {
+          return `${location.name} (ZIP Code)`;
+        }
+
+        // Handle US locations with state (show full state name)
+        if (location.country === 'US' && location.state && location.state !== 'Unknown') {
+          const fullStateName = getFullStateName(location.state);
+          return `${location.name}, ${fullStateName}`;
+        }
+        // Handle non-US locations with state/province
+        else if (location.state && location.state !== 'Unknown' && location.country !== 'US') {
+          return `${location.name}, ${location.state}, ${location.country}`;
+        }
+        // Handle locations with country only
+        else if (location.country && location.country !== 'Unknown') {
+          // For US locations without state, still show US for clarity
+          if (location.country === 'US') {
+            return `${location.name}, United States`;
+          }
+          return `${location.name}, ${getFullCountryName(location.country)}`;
+        }
+
+        // Default to just the name
+        return location.name;
+      }
+
+      async function findNearestCityWithWeather(cityName, countryCode) {
+        console.log(`🔍 Searching for weather data for ${cityName} in ${countryCode}`);
+
+        try {
+          // First, try the exact city name
+          const searchQuery = `${cityName},${countryCode}`;
+          const weatherUrl = `${WEATHER_API_BASE}/weather?q=${encodeURIComponent(searchQuery)}&units=${currentUnits}&appid=${API_KEY}`;
+          const response = await fetch(weatherUrl);
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ Found weather data for ${cityName}`);
+            return { city: cityName, data: data, isExact: true };
+          }
+
+          // If exact match fails, try to find nearby cities using geocoding
+          console.log(`⚠️ No exact match for ${cityName}, searching for nearby cities...`);
+
+          const geocodingUrl = `${GEO_API_BASE}/direct?q=${encodeURIComponent(searchQuery)}&limit=5&appid=${API_KEY}`;
+          const geoResponse = await fetch(geocodingUrl);
+
+          if (geoResponse.ok) {
+            const locations = await geoResponse.json();
+
+            // Try each location returned by geocoding
+            for (const location of locations) {
+              try {
+                const nearbyWeatherUrl = `${WEATHER_API_BASE}/weather?lat=${location.lat}&lon=${location.lon}&units=${currentUnits}&appid=${API_KEY}`;
+                const nearbyResponse = await fetch(nearbyWeatherUrl);
+
+                if (nearbyResponse.ok) {
+                  const nearbyData = await nearbyResponse.json();
+                  console.log(`✅ Found weather data for nearby city: ${location.name}`);
+                  return {
+                    city: location.name,
+                    state: location.state,
+                    country: location.country,
+                    data: nearbyData,
+                    isExact: false,
+                    originalSearch: cityName
+                  };
+                }
+              } catch (nearbyError) {
+                console.log(`❌ Failed to get weather for ${location.name}:`, nearbyError);
+                continue;
+              }
+            }
+          }
+
+          throw new Error(`No weather data available for ${cityName} or nearby areas`);
+
+        } catch (error) {
+          console.error(`❌ Error finding weather data for ${cityName}:`, error);
+          throw error;
+        }
+      }
+      async function getWeather() {
+        console.log("🌤️ getWeather function called");
+
+        const locationInput = document.getElementById("locationInput");
+        const countrySelect = document.getElementById("locationCountrySelect");
+        const cityName = locationInput.value.trim();
+        const countryCode = countrySelect.value;
+
+        // Validate inputs
+        if (!countryCode) {
+          showError("Please select your country first");
+          return;
+        }
+
+        if (!cityName) {
+          showError("Please enter your city, town, or village");
+          return;
+        }
+
+        console.log(`🌍 Searching for weather: ${cityName} in ${countryCode}`);
+
+        // Show loading state
+        const button = document.getElementById("getWeatherBtn");
+        const btnText = document.getElementById("getWeatherBtnText");
+        if (button) {
+          const originalText = btnText.textContent;
+          button.innerHTML = '<div class="spinner mx-auto"></div>';
+          button.disabled = true;
+        }
+
+        hideError();
+
+        try {
+          // Set units based on country and user preference
+          if (userProfile.unitPreference !== 'auto') {
+            currentUnits = userProfile.unitPreference;
+          } else {
+            currentUnits = detectUnits(countryCode);
+          }
+          currentCountry = countryCode;
+
+          console.log(`🎛️ Using units: ${currentUnits} for country: ${countryCode}`);
+
+          // Try to find weather data for the location
+          const weatherResult = await findNearestCityWithWeather(cityName, countryCode);
+
+          if (weatherResult) {
+            // Get forecast data
+            let forecastData = null;
+            try {
+              const forecastUrl = `${WEATHER_API_BASE}/forecast?q=${encodeURIComponent(weatherResult.city + ',' + countryCode)}&units=${currentUnits}&appid=${API_KEY}`;
+              const forecastResponse = await fetch(forecastUrl);
+              if (forecastResponse.ok) {
+                forecastData = await forecastResponse.json();
+              }
+            } catch (forecastError) {
+              console.log("⚠️ Forecast failed:", forecastError);
+            }
+
+            // Process forecast
+            const todaysForecast = forecastData
+              ? getTodaysForecast(forecastData)
+              : getSimpleForecast(weatherResult.data);
+
+            // Create display location name
+            let locationDisplay = weatherResult.city;
+            if (weatherResult.state) {
+              locationDisplay += `, ${weatherResult.state}`;
+            }
+            locationDisplay += `, ${weatherResult.country || getFullCountryName(countryCode)}`;
+
+            // Add note if not exact match
+            if (!weatherResult.isExact) {
+              locationDisplay += ` (nearest available)`;
+              console.log(`ℹ️ Using nearest city: ${weatherResult.city} instead of ${weatherResult.originalSearch}`);
+
+              // Show info message to user
+              showLocationNote(`Weather data for "${weatherResult.originalSearch}" not available. Showing data for nearest city: ${weatherResult.city}`);
+            }
+
+            const weatherData = {
+              location: locationDisplay,
+              temperature: Math.round(weatherResult.data.main.temp),
+              condition: weatherResult.data.weather[0].main,
+              humidity: weatherResult.data.main.humidity,
+              windSpeed: Math.round(weatherResult.data.wind?.speed || 0),
+              feelsLike: Math.round(weatherResult.data.main.feels_like),
+              forecast: todaysForecast,
+            };
+
+            displayWeather(weatherData);
+
+            // Save location for quick access
+            const saveLocation = `${cityName}, ${getFullCountryName(countryCode)}`;
+            savedLocation = saveLocation;
+            try {
+              localStorage.setItem("weatherWardrobeLocation", savedLocation);
+            } catch (e) {
+              console.log("Cannot save location");
+            }
+            updateUI();
+
+          } else {
+            throw new Error("No weather data available");
+          }
+
+        } catch (error) {
+          console.error("❌ Weather lookup failed:", error);
+
+          let errorMessage = `Unable to find weather data for "${cityName}" in ${getFullCountryName(countryCode)}. `;
+          errorMessage += "Please try:\n";
+          errorMessage += "• A larger nearby city\n";
+          errorMessage += "• Different spelling\n";
+          errorMessage += "• Official city name in English";
+
+          showError(errorMessage);
+        } finally {
+          // Reset button
+          if (button && btnText) {
+            button.innerHTML = '<span id="getWeatherBtnText">Get Clothing Advice</span>';
+            button.disabled = false;
+          }
+        }
+      }
+
+      function getSimpleForecast(currentData) {
+        // Create a simple forecast based on current weather when detailed forecast fails
+        const currentTemp = Math.round(currentData.main.temp);
+        const alerts = [];
+
+        // Generate some basic forecast info
+        const high = currentTemp + Math.floor(Math.random() * 10) + 2; // 2-12 degrees higher
+        const low = currentTemp - Math.floor(Math.random() * 15) - 5; // 5-20 degrees lower
+
+        // Add some basic alerts based on current conditions
+        if (currentData.weather[0].main.toLowerCase().includes("thunder")) {
+          alerts.push(
+            "Thunderstorms possible - bring an umbrella and avoid outdoor activities!",
+          );
+        }
+        if (currentData.wind?.speed > 10) {
+          alerts.push(
+            "Windy conditions continuing - secure clothing and accessories!",
+          );
+        }
+        if (high - currentTemp > 8) {
+          alerts.push(
+            `Temperature may rise to ${formatTemperature(high)} later - dress in layers!`,
+          );
+        }
+
+        return {
+          high,
+          low,
+          afternoon: currentData.weather[0].main,
+          evening: currentData.weather[0].main,
+          alerts:
+            alerts.length > 0
+              ? alerts
+              : [`High: ${formatTemperature(high)}, Low: ${formatTemperature(low)} expected today`],
+        };
+      }
+
+      function getTodaysForecast(forecastData) {
+        if (
+          !forecastData ||
+          !forecastData.list ||
+          forecastData.list.length === 0
+        ) {
+          console.log("No forecast data available");
+          return null;
+        }
+
+        const today = new Date();
+        const todayStr = today.toISOString().split("T")[0]; // YYYY-MM-DD format
+
+        // Filter today's forecast entries (3-hour intervals)
+        const todaysEntries = forecastData.list.filter((entry) => {
+          const entryDate = new Date(entry.dt * 1000)
+            .toISOString()
+            .split("T")[0];
+          return entryDate === todayStr;
+        });
+
+        console.log("Today entries found:", todaysEntries.length);
+
+        if (todaysEntries.length === 0) {
+          // If no entries for today, use tomorrow's data
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
+          const tomorrowEntries = forecastData.list
+            .filter((entry) => {
+              const entryDate = new Date(entry.dt * 1000)
+                .toISOString()
+                .split("T")[0];
+              return entryDate === tomorrowStr;
+            })
+            .slice(0, 3); // Just first 3 entries of tomorrow
+
+          if (tomorrowEntries.length === 0) {
+            return null;
+          }
+
+          const temps = tomorrowEntries.map((entry) => entry.main.temp);
+          return {
+            high: Math.round(Math.max(...temps)),
+            low: Math.round(Math.min(...temps)),
+            afternoon: tomorrowEntries[0]?.weather[0].main || "Unknown",
+            evening: tomorrowEntries[1]?.weather[0].main || "Unknown",
+            alerts: ["Showing tomorrow's forecast"],
+          };
+        }
+
+        // Find high and low temps for today
+        const temps = todaysEntries.map((entry) => entry.main.temp);
+        console.log("📈 Today's forecast temperatures:", temps);
+        console.log("📈 Number of forecast entries for today:", todaysEntries.length);
+
+        const high = Math.round(Math.max(...temps));
+        const low = Math.round(Math.min(...temps));
+
+        console.log("📈 Calculated high:", high, "low:", low);
+
+        // If high and low are the same, use a reasonable spread
+        let adjustedHigh = high;
+        let adjustedLow = low;
+
+        if (high === low && todaysEntries.length === 1) {
+          // Only one data point - create realistic high/low spread
+          console.log("📈 Only one forecast point - creating realistic spread");
+          adjustedHigh = high + 3; // 3 degrees higher
+          adjustedLow = low - 5;   // 5 degrees lower
+          console.log("📈 Adjusted high:", adjustedHigh, "low:", adjustedLow);
+        }
+
+        // Get afternoon and evening conditions
+        const currentHour = today.getHours();
+        const afternoonEntry = todaysEntries.find((entry) => {
+          const hour = new Date(entry.dt * 1000).getHours();
+          return hour >= 14 && hour <= 17; // 2 PM - 5 PM
+        });
+        const eveningEntry = todaysEntries.find((entry) => {
+          const hour = new Date(entry.dt * 1000).getHours();
+          return hour >= 18 && hour <= 21; // 6 PM - 9 PM
+        });
+
+        // Generate alerts based on forecast
+        const alerts = [];
+
+        // Check for rain/snow later
+        const laterEntries = todaysEntries.filter((entry) => {
+          const hour = new Date(entry.dt * 1000).getHours();
+          return hour > currentHour;
+        });
+
+        const rainLater = laterEntries.some(
+          (entry) =>
+            entry.weather[0].main.toLowerCase().includes("rain") ||
+            entry.weather[0].main.toLowerCase().includes("drizzle"),
+        );
+        const snowLater = laterEntries.some((entry) =>
+          entry.weather[0].main.toLowerCase().includes("snow"),
+        );
+        const windyLater = laterEntries.some(
+          (entry) => (entry.wind?.speed || 0) > 15,
+        );
+
+        if (rainLater)
+          alerts.push(
+            "Rain expected later today - consider bringing an umbrella!",
+          );
+        if (snowLater)
+          alerts.push("Snow expected later - pack extra warm layers!");
+        if (windyLater)
+          alerts.push("Getting windier later - consider a windbreaker!");
+
+        // Temperature change alerts
+        const currentTemp = Math.round(todaysEntries[0]?.main.temp || 0);
+        if (high - currentTemp > 10) {
+          alerts.push(`Warming up significantly - high of ${formatTemperature(high)} expected!`);
+        }
+        if (currentTemp - low > 10 && currentHour < 18) {
+          alerts.push(`Cooling down later - low of ${formatTemperature(low)} tonight!`);
+        }
+
+        // If no specific alerts, add a general one
+        if (alerts.length === 0) {
+          alerts.push(`High: ${formatTemperature(adjustedHigh)}, Low: ${formatTemperature(adjustedLow)} expected today`);
+        }
+
+        return {
+          high: adjustedHigh,
+          low: adjustedLow,
+          afternoon: afternoonEntry?.weather[0].main || "Similar conditions",
+          evening: eveningEntry?.weather[0].main || "Similar conditions",
+          alerts,
+        };
+      }
+
+      function displayWeather(weather) {
+        console.log("🌡️ displayWeather called");
+        console.log("🌡️ userProfile.unitPreference:", userProfile.unitPreference);
+        console.log("🌡️ currentUnits:", currentUnits);
+        console.log("🌡️ Original weather data:", weather);
+
+        // Update weather info
+        document.getElementById("weatherLocation").textContent =
+          weather.location;
+        document.getElementById("weatherTemp").textContent =
+          formatTemperature(weather.temperature);
+        document.getElementById("weatherCondition").textContent =
+          weather.condition;
+        document.getElementById("feelsLike").textContent =
+          formatTemperature(weather.feelsLike);
+        document.getElementById("humidity").textContent =
+          weather.humidity + "%";
+        document.getElementById("windSpeed").textContent =
+          formatWindSpeed(weather.windSpeed);
+
+        // Update weather icon
+        const iconContainer = document.getElementById("weatherIcon");
+        iconContainer.innerHTML = getWeatherIcon(weather.condition);
+
+        // Update today's forecast if available
+        const forecastContainer = document.getElementById("todaysForecast");
+        if (weather.forecast) {
+          console.log("Displaying forecast:", weather.forecast);
+          let forecastHTML = `
+                    <div class="bg-blue-50 rounded-xl p-4 mt-4">
+                        <h4 class="font-semibold text-blue-800 mb-2">📅 Today's Forecast</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm mb-3">
+                            <div class="text-center">
+                                <p class="text-blue-600">High</p>
+                                <p class="font-bold text-blue-800">${formatTemperature(weather.forecast.high)}</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-blue-600">Low</p>
+                                <p class="font-bold text-blue-800">${formatTemperature(weather.forecast.low)}</p>
+                            </div>
+                        </div>
+                `;
+
+          if (weather.forecast.alerts && weather.forecast.alerts.length > 0) {
+            forecastHTML += '<div class="space-y-1">';
+            weather.forecast.alerts.forEach((alert) => {
+              forecastHTML += `<p class="text-blue-700 text-xs">⚠️ ${alert}</p>`;
+            });
+            forecastHTML += "</div>";
+          }
+
+          forecastHTML += "</div>";
+          forecastContainer.innerHTML = forecastHTML;
+          forecastContainer.classList.remove("hidden");
+        } else {
+          console.log("No forecast data to display");
+          forecastContainer.classList.add("hidden");
+        }
+
+        // Update clothing advice with detailed categorized recommendations
+        const advice = getClothingRecommendation(
+          weather.temperature,
+          weather.condition,
+          weather.forecast,
+        );
+
+        // Show personalized note if applicable
+        if (userProfile.hasLearned) {
+          document
+            .getElementById("personalizedNote")
+            .classList.remove("hidden");
+        }
+
+        // Show results
+        document.getElementById("weatherResults").classList.remove("hidden");
+      }
+
+      function getWeatherIcon(condition) {
+        const lowerCondition = condition.toLowerCase();
+        if (
+          lowerCondition.includes("rain") ||
+          lowerCondition.includes("drizzle")
+        ) {
+          return `<svg class="weather-icon text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M8 19v2m8-2v2m-4-3v2m-4-5v2"/>
+                </svg>`;
+        } else if (lowerCondition.includes("cloud")) {
+          return `<svg class="weather-icon text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                </svg>`;
+        } else {
+          return `<svg class="weather-icon text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>`;
+        }
+      }
+      function getClothingRecommendation(temp, condition, forecast) {
+        const lowerCondition = condition.toLowerCase();
+        let baseTemp = temp;
+
+        // Adjust temperature based on user preferences
+        if (userProfile.temperaturePreference === "runs-hot") {
+          baseTemp += 10;
+        } else if (userProfile.temperaturePreference === "runs-cold") {
+          baseTemp -= 10;
+        }
+
+        // Adjust for activity level
+        if (userProfile.activityLevel === "active") {
+          baseTemp += 5; // Active people get warmer
+        } else if (userProfile.activityLevel === "sedentary") {
+          baseTemp -= 3; // Sedentary people might feel cooler
+        }
+
+        // Get detailed recommendations by category
+        const recommendations = getDetailedClothingRecommendations(
+          baseTemp,
+          lowerCondition,
+          forecast,
+        );
+
+        // Update each category in the UI
+        const topEl = document.getElementById("topRecommendation");
+        const bottomEl = document.getElementById("bottomRecommendation");
+        const footwearEl = document.getElementById("footwearRecommendation");
+        const accessoriesEl = document.getElementById(
+          "accessoriesRecommendation",
+        );
+        const alertDiv = document.getElementById("weatherAlerts");
+        const alertText = document.getElementById("weatherAlertText");
+
+        console.log("Elements found:", {
+          topEl: !!topEl,
+          bottomEl: !!bottomEl,
+          footwearEl: !!footwearEl,
+          accessoriesEl: !!accessoriesEl,
+          alertDiv: !!alertDiv,
+          alertText: !!alertText,
+        });
+
+        if (topEl) topEl.textContent = recommendations.top;
+        if (bottomEl) bottomEl.textContent = recommendations.bottom;
+        if (footwearEl) footwearEl.textContent = recommendations.footwear;
+        if (accessoriesEl)
+          accessoriesEl.textContent = recommendations.accessories;
+
+        // Handle weather alerts
+        if (recommendations.alerts && recommendations.alerts.length > 0) {
+          alertText.textContent = recommendations.alerts.join(" ");
+          alertDiv.classList.remove("hidden");
+        } else {
+          alertDiv.classList.add("hidden");
+        }
+
+        // Return a summary for backward compatibility
+        return `${recommendations.top} ${recommendations.bottom} ${recommendations.footwear}`;
+      }
+
       function getDetailedClothingRecommendations(
         baseTemp,
         condition,
@@ -2928,7 +2439,6 @@
         };
 
         // Normalize temperature to Fahrenheit for consistent thresholds
-        // If we're using metric, the API returns Celsius, so convert to Fahrenheit for clothing logic
         let tempForClothing = baseTemp;
         if (currentUnits === 'metric') {
           tempForClothing = celsiusToFahrenheit(baseTemp);
@@ -3002,7 +2512,7 @@
         }
 
         // Lower Body Recommendations
-        if (baseTemp >= 80) {
+        if (tempForClothing >= 80) {
           if (style === "professional") {
             recommendations.bottom =
               "Lightweight dress pants, knee-length skirt, or professional shorts";
@@ -3048,7 +2558,7 @@
         }
 
         // Footwear Recommendations
-        if (baseTemp >= 80) {
+        if (tempForClothing >= 80) {
           if (style === "professional") {
             recommendations.footwear =
               "Breathable dress shoes, professional sandals, or loafers";
@@ -3090,7 +2600,7 @@
         }
 
         // Accessories Recommendations
-        if (baseTemp >= 80) {
+        if (tempForClothing >= 80) {
           recommendations.accessories = "Sunglasses, sun hat, and sunscreen";
         } else if (tempForClothing >= 70) {
           recommendations.accessories =
@@ -3146,6 +2656,80 @@
         return recommendations;
       }
 
+      // Convert state abbreviations to full names
+      function getFullStateName(stateCode) {
+        const stateNames = {
+          'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+          'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+          'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+          'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+          'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+          'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+          'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+          'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+          'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+          'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
+          'DC': 'Washington D.C.'
+        };
+        return stateNames[stateCode] || stateCode;
+      }
+
+      // Convert country codes to full names for common countries
+      function getFullCountryName(countryCode) {
+        const countryNames = {
+          'US': 'United States',
+          'CA': 'Canada',
+          'GB': 'United Kingdom',
+          'AU': 'Australia',
+          'DE': 'Germany',
+          'FR': 'France',
+          'ES': 'Spain',
+          'IT': 'Italy',
+          'NL': 'Netherlands',
+          'JP': 'Japan',
+          'KR': 'South Korea',
+          'IN': 'India',
+          'BR': 'Brazil',
+          'MX': 'Mexico',
+          'AR': 'Argentina',
+          'ZA': 'South Africa',
+          'NG': 'Nigeria',
+          'EG': 'Egypt',
+          'CN': 'China',
+          'TH': 'Thailand',
+          'SG': 'Singapore',
+          'NZ': 'New Zealand',
+          'NO': 'Norway',
+          'SE': 'Sweden',
+          'DK': 'Denmark',
+          'FI': 'Finland',
+          'IE': 'Ireland',
+          'CH': 'Switzerland',
+          'AT': 'Austria',
+          'BE': 'Belgium',
+          'PT': 'Portugal',
+          'GR': 'Greece',
+          'PL': 'Poland',
+          'CZ': 'Czech Republic',
+          'HU': 'Hungary',
+          'RO': 'Romania',
+          'BG': 'Bulgaria',
+          'HR': 'Croatia',
+          'SI': 'Slovenia',
+          'SK': 'Slovakia',
+          'LT': 'Lithuania',
+          'LV': 'Latvia',
+          'EE': 'Estonia',
+          'RU': 'Russia',
+          'UA': 'Ukraine',
+          'TR': 'Turkey',
+          'IL': 'Israel',
+          'AE': 'UAE',
+          'SA': 'Saudi Arabia'
+        };
+        return countryNames[countryCode] || countryCode;
+      }
+
       // Allow Enter key to search - with proper event handling
       document
         .getElementById("locationInput")
@@ -3170,3 +2754,8 @@
     <!-- Secure API deployment -->
   </body>
 </html>
+      
+      
+          
+          
+        

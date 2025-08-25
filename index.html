@@ -2079,7 +2079,7 @@
       // Country-first location selection functions
       function handleCountrySelection(countryCode) {
         console.log("🌍 Country selected:", countryCode);
-        alert(`DEBUG: handleCountrySelection called with: ${countryCode}`);
+        alert("Country selection function called: " + countryCode);
         selectedCountry = countryCode;
 
         const cityContainer = document.getElementById('cityInputContainer');
@@ -2087,37 +2087,29 @@
         const getWeatherBtn = document.getElementById('getWeatherBtn');
         const btnText = document.getElementById('getWeatherBtnText');
 
-        console.log("🔍 Debug elements found:");
-        console.log("  cityContainer:", cityContainer);
-        console.log("  locationInput:", locationInput);
-        console.log("  getWeatherBtn:", getWeatherBtn);
-        console.log("  btnText:", btnText);
+        console.log("Elements found:", {
+          cityContainer: !!cityContainer,
+          locationInput: !!locationInput,
+          getWeatherBtn: !!getWeatherBtn,
+          btnText: !!btnText
+        });
 
         if (countryCode) {
-          console.log("✅ Country code provided, showing city input");
-
           // Show city input
           if (cityContainer) {
             cityContainer.style.display = 'block';
             console.log("✅ City container shown");
-          } else {
-            console.error("❌ City container not found!");
           }
-
           if (locationInput) {
             locationInput.disabled = false;
             locationInput.focus();
-            console.log("✅ Location input enabled and focused");
-          } else {
-            console.error("❌ Location input not found!");
+            console.log("✅ Location input enabled");
           }
 
           // Update button text
           if (btnText) {
             btnText.textContent = 'Enter City/Town/Village';
-            console.log("✅ Button text updated to: Enter City/Town/Village");
-          } else {
-            console.error("❌ Button text element not found!");
+            console.log("✅ Button text updated");
           }
 
           // Update placeholder based on country
@@ -2139,7 +2131,10 @@
           };
 
           const countryName = countryNames[countryCode] || 'your country';
-          locationInput.placeholder = `Enter city, town, or village in ${countryName}`;
+          if (locationInput) {
+            locationInput.placeholder = `Enter city, town, or village in ${countryName}`;
+            console.log("✅ Placeholder updated");
+          }
 
           // Update current country for unit detection
           currentCountry = countryCode;
@@ -2154,8 +2149,6 @@
           }
 
         } else {
-          console.log("❌ No country code provided, hiding city input");
-
           // Hide city input
           if (cityContainer) {
             cityContainer.style.display = 'none';
@@ -2216,7 +2209,7 @@
           }
 
           // If exact match fails, try to find nearby cities using geocoding
-          console.log(`���️ No exact match for ${cityName}, searching for nearby cities...`);
+          console.log(`⚠️ No exact match for ${cityName}, searching for nearby cities...`);
 
           const geocodingUrl = `/api/geocoding?q=${encodeURIComponent(cityName + ',' + countryCode)}&limit=5`;
           const geoResponse = await fetch(geocodingUrl);
@@ -2719,7 +2712,7 @@
             statusText = "📮 ZIP Code";
             statusClass = "text-xs text-blue-600";
           } else if (location.popular) {
-            statusText = "�� Popular location";
+            statusText = "⭐ Popular location";
             statusClass = "text-xs text-green-600";
           } else if (location.verified) {
             if (isDuplicate) {
@@ -2737,7 +2730,7 @@
             statusText = "💡 Try adding state (e.g., \"" + location.name + ", NJ\")";
             statusClass = "text-xs text-orange-600";
           } else if (location.userInput) {
-            statusText = "�� As entered";
+            statusText = "��� As entered";
             statusClass = "text-xs text-gray-600";
           } else {
             statusText = "📍 Location";

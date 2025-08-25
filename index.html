@@ -1981,8 +1981,20 @@
 
         const locationInput = document.getElementById("locationInput");
         const countrySelect = document.getElementById("locationCountrySelect");
-        const cityName = locationInput.value.trim();
-        const countryCode = countrySelect.value;
+        
+        // Check if we're using saved location or new input
+        let cityName, countryCode;
+        
+        if (savedLocation && !document.getElementById("savedLocationDiv").classList.contains("hidden")) {
+          // Using saved location - parse it
+          const parts = savedLocation.split(',');
+          cityName = parts[0].trim(); // Get first part as city
+          countryCode = userProfile.countryPreference || 'US'; // Use saved country preference
+        } else {
+          // Using manual input
+          cityName = locationInput.value.trim();
+          countryCode = countrySelect.value;
+        }
 
         // Validate inputs
         if (!countryCode) {
@@ -2425,9 +2437,12 @@
           forecast,
         );
         
-        // Add time-based context to alerts
+        // Add time-based context to alerts (only if not already present)
         if (timePeriod !== "now") {
-          recommendations.alerts.unshift(`📅 Recommendations for ${timePeriod}`);
+          const timeAlert = `📅 Recommendations for ${timePeriod}`;
+          if (!recommendations.alerts.includes(timeAlert)) {
+            recommendations.alerts.unshift(timeAlert);
+          }
         }
         
         // If big temperature range, add layering advice

@@ -2267,40 +2267,43 @@
         loadingDiv.classList.remove("hidden");
         suggestionsContainer.classList.remove("hidden");
 
-        console.log("🔍 Searching for locations:", query);
+        console.log("🔍 DEBUGGING: Searching for locations:", query);
 
         try {
           let locations = [];
 
-          // Strategy 1: Direct geocoding API search (now with proper API key)
-          await tryGeocodingAPISearch(query, locations);
+          // SIMPLIFIED: Just try the basic geocoding API first
+          console.log("🔍 DEBUGGING: Trying basic geocoding API...");
+          const response = await fetch(`/api/geocoding?q=${encodeURIComponent(query)}&limit=8`);
 
-          // Strategy 2: If user didn't include state/country, try adding country preference
-          if (locations.length === 0 && !query.includes(',')) {
-            const countryPref = userProfile.countryPreference || 'auto';
+          console.log("🔍 DEBUGGING: API Response status:", response.status);
+          console.log("🔍 DEBUGGING: API Response ok:", response.ok);
 
-            if (countryPref !== 'auto') {
-              console.log(`🌍 Trying with country preference: ${countryPref}`);
-              await tryGeocodingAPISearch(`${query},${countryPref}`, locations);
-            } else {
-              // Try US first (most common), then other major countries
-              await tryGeocodingAPISearch(`${query},US`, locations);
-              if (locations.length === 0) {
-                await tryGeocodingAPISearch(`${query},CA`, locations);
-              }
-              if (locations.length === 0) {
-                await tryGeocodingAPISearch(`${query},GB`, locations);
-              }
-            }
+          if (response.ok) {
+            const apiLocations = await response.json();
+            console.log("🔍 DEBUGGING: API returned data:", apiLocations);
+            console.log("🔍 DEBUGGING: Number of locations:", apiLocations.length);
+
+            // Convert API response to our format
+            apiLocations.forEach(location => {
+              console.log("🔍 DEBUGGING: Processing location:", location);
+              locations.push({
+                name: location.name,
+                state: location.state,
+                country: location.country,
+                lat: location.lat,
+                lon: location.lon,
+                verified: true
+              });
+            });
+          } else {
+            const errorData = await response.json();
+            console.error("🔍 DEBUGGING: API Error:", errorData);
           }
 
-          // Strategy 2.5: Enhanced small town search for difficult-to-find locations
-          if (locations.length === 0) {
-            await tryEnhancedSmallTownSearch(query, locations);
-          }
-
-          // Strategy 3: Enhanced zip code handling
+          // Handle zip codes
           if (/^\d{5}(-\d{4})?$/.test(query.trim())) {
+            console.log("🔍 DEBUGGING: Adding zip code option");
             locations.unshift({
               name: query.trim(),
               country: 'US',
@@ -2310,36 +2313,25 @@
             });
           }
 
-          // Strategy 4: Sort and prioritize results
-          if (locations.length > 0) {
-            locations = prioritizeLocationResults(locations, query);
-          }
-
-          console.log(`🔍 Found ${locations.length} locations for "${query}"`);
+          console.log(`🔍 DEBUGGING: Final locations array:`, locations);
+          console.log(`🔍 DEBUGGING: Total locations found: ${locations.length}`);
 
           if (locations.length > 0) {
+            console.log("🔍 DEBUGGING: Displaying suggestions...");
             displayLocationSuggestions(locations);
           } else {
-            // Provide helpful suggestions based on the search query
-            let helpText = 'No locations found. ';
-
-            if (!query.includes(',')) {
-              helpText += `Try adding state: "<strong>${query}, NJ</strong>" or use ZIP code.`;
-            } else {
-              helpText += 'Try different spelling or use ZIP code.';
-            }
-
-            // Add examples based on common patterns
-            if (query.length < 4) {
-              helpText += '<br><small class="text-xs">💡 Short names need state (e.g., "Red Bank, NJ")</small>';
-            }
-
-            suggestionsList.innerHTML = `<div class="px-4 py-2 text-sm text-gray-500">${helpText}</div>`;
+            console.log("🔍 DEBUGGING: No locations found, showing error message");
+            suggestionsList.innerHTML = `
+              <div class="px-4 py-2 text-sm text-gray-500">
+                No locations found for "${query}".<br>
+                <small>Try: "${query.split(',')[0]}, NJ" or use ZIP code</small>
+              </div>
+            `;
           }
         } catch (error) {
-          console.error('Search error:', error);
+          console.error('🔍 DEBUGGING: Search error:', error);
           suggestionsList.innerHTML =
-            '<div class="px-4 py-2 text-sm text-gray-500">Search temporarily unavailable - try zip codes or city with state</div>';
+            '<div class="px-4 py-2 text-sm text-red-500">Search error - check console for details</div>';
         }
 
         loadingDiv.classList.add("hidden");

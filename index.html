@@ -2396,15 +2396,15 @@
         
         // If we have forecast data and it's late/early, use forecast temps
         if (forecast && (currentHour >= 20 || currentHour < 6)) {
-          // Evening/night: prepare for tomorrow
+          // Evening/night: use tomorrow's temps for practical recommendations
           useTemp = forecast.high;
-          timePeriod = "tomorrow";
           
-          // Also consider the low for layering advice
+          // Show the temperature range if there's a big swing
           const tempRange = forecast.high - forecast.low;
           if (tempRange > 20) {
-            // Big temperature swing - recommend layers
-            timePeriod = `tomorrow (${formatTemperature(forecast.low)} to ${formatTemperature(forecast.high)})`;
+            timePeriod = `${formatTemperature(forecast.low)} to ${formatTemperature(forecast.high)} expected`;
+          } else {
+            timePeriod = "now"; // Don't add a special message
           }
         } else if (forecast && currentHour < 12) {
           // Morning: consider the day's high

@@ -186,70 +186,6 @@
               </div>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Default Country/Region</label
-              >
-              <select
-                id="countryPreference"
-                onchange="setCountryPreference(this.value)"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="auto">Auto-detect from location</option>
-                <option value="US">United States</option>
-                <option value="CA">Canada</option>
-                <option value="GB">United Kingdom</option>
-                <option value="AU">Australia</option>
-                <option value="DE">Germany</option>
-                <option value="FR">France</option>
-                <option value="ES">Spain</option>
-                <option value="IT">Italy</option>
-                <option value="NL">Netherlands</option>
-                <option value="JP">Japan</option>
-                <option value="KR">South Korea</option>
-                <option value="IN">India</option>
-                <option value="BR">Brazil</option>
-                <option value="MX">Mexico</option>
-                <option value="AR">Argentina</option>
-                <option value="ZA">South Africa</option>
-                <option value="NG">Nigeria</option>
-                <option value="EG">Egypt</option>
-                <option value="CN">China</option>
-                <option value="TH">Thailand</option>
-                <option value="SG">Singapore</option>
-                <option value="NZ">New Zealand</option>
-                <option value="NO">Norway</option>
-                <option value="SE">Sweden</option>
-                <option value="DK">Denmark</option>
-                <option value="FI">Finland</option>
-                <option value="IE">Ireland</option>
-                <option value="CH">Switzerland</option>
-                <option value="AT">Austria</option>
-                <option value="BE">Belgium</option>
-                <option value="PT">Portugal</option>
-                <option value="GR">Greece</option>
-                <option value="PL">Poland</option>
-                <option value="CZ">Czech Republic</option>
-                <option value="HU">Hungary</option>
-                <option value="RO">Romania</option>
-                <option value="BG">Bulgaria</option>
-                <option value="HR">Croatia</option>
-                <option value="SI">Slovenia</option>
-                <option value="SK">Slovakia</option>
-                <option value="LT">Lithuania</option>
-                <option value="LV">Latvia</option>
-                <option value="EE">Estonia</option>
-                <option value="RU">Russia</option>
-                <option value="UA">Ukraine</option>
-                <option value="TR">Turkey</option>
-                <option value="IL">Israel</option>
-                <option value="AE">UAE</option>
-                <option value="SA">Saudi Arabia</option>
-              </select>
-              <div class="text-xs text-gray-500 mt-1">
-                This helps provide more accurate location suggestions for your region
-              </div>
-            </div>
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2"
@@ -526,8 +462,75 @@
 
           <!-- Location Input Form -->
           <div id="locationInputDiv" class="mb-6">
-            <div class="flex gap-2">
-              <div class="relative flex-1">
+            <!-- Country Selection First -->
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <span class="text-red-500">*</span> Select Your Country First
+              </label>
+              <select
+                id="locationCountrySelect"
+                onchange="handleCountrySelection(this.value)"
+                class="w-full px-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Choose your country...</option>
+                <option value="US">United States</option>
+                <option value="CA">Canada</option>
+                <option value="GB">United Kingdom</option>
+                <option value="AU">Australia</option>
+                <option value="DE">Germany</option>
+                <option value="FR">France</option>
+                <option value="ES">Spain</option>
+                <option value="IT">Italy</option>
+                <option value="NL">Netherlands</option>
+                <option value="JP">Japan</option>
+                <option value="KR">South Korea</option>
+                <option value="IN">India</option>
+                <option value="BR">Brazil</option>
+                <option value="MX">Mexico</option>
+                <option value="AR">Argentina</option>
+                <option value="ZA">South Africa</option>
+                <option value="NG">Nigeria</option>
+                <option value="EG">Egypt</option>
+                <option value="CN">China</option>
+                <option value="TH">Thailand</option>
+                <option value="SG">Singapore</option>
+                <option value="NZ">New Zealand</option>
+                <option value="NO">Norway</option>
+                <option value="SE">Sweden</option>
+                <option value="DK">Denmark</option>
+                <option value="FI">Finland</option>
+                <option value="IE">Ireland</option>
+                <option value="CH">Switzerland</option>
+                <option value="AT">Austria</option>
+                <option value="BE">Belgium</option>
+                <option value="PT">Portugal</option>
+                <option value="GR">Greece</option>
+                <option value="PL">Poland</option>
+                <option value="CZ">Czech Republic</option>
+                <option value="HU">Hungary</option>
+                <option value="RO">Romania</option>
+                <option value="BG">Bulgaria</option>
+                <option value="HR">Croatia</option>
+                <option value="SI">Slovenia</option>
+                <option value="SK">Slovakia</option>
+                <option value="LT">Lithuania</option>
+                <option value="LV">Latvia</option>
+                <option value="EE">Estonia</option>
+                <option value="RU">Russia</option>
+                <option value="UA">Ukraine</option>
+                <option value="TR">Turkey</option>
+                <option value="IL">Israel</option>
+                <option value="AE">UAE</option>
+                <option value="SA">Saudi Arabia</option>
+              </select>
+            </div>
+
+            <!-- City Input (Hidden until country selected) -->
+            <div class="mb-4" id="cityInputContainer" style="display: none;">
+              <label class="block text-sm font-medium text-gray-700 mb-2" id="cityInputLabel">
+                <span class="text-red-500">*</span> Enter Your City/Town/Village
+              </label>
+              <div class="relative">
                 <svg
                   class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10"
                   fill="none"
@@ -550,12 +553,13 @@
                 <input
                   type="text"
                   id="locationInput"
-                  placeholder="Enter city name or zip code"
+                  placeholder="Enter your city, town, or village name"
                   autocomplete="off"
                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   oninput="handleLocationInput(this.value)"
                   onblur="setTimeout(() => hideLocationSuggestions(), 150)"
                   onfocus="showRecentSuggestions()"
+                  disabled
                 />
 
                 <!-- Autocomplete Dropdown -->
@@ -573,27 +577,15 @@
                   </div>
                 </div>
               </div>
-
-              <!-- Use Current Location Button -->
-              <button
-                onclick="getCurrentLocation()"
-                id="geoLocationBtn"
-                class="px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center min-w-[52px]"
-                title="Use my current location"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
             </div>
 
             <button
               onclick="getWeather()"
               class="w-full mt-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               id="getWeatherBtn"
+              disabled
             >
-              Get Clothing Advice
+              <span id="getWeatherBtnText">Select Country & City First</span>
             </button>
           </div>
 
@@ -966,14 +958,102 @@
           const location = localStorage.getItem("weatherWardrobeLocation");
           if (location) {
             savedLocation = location;
-            document.getElementById("locationInput").value = location;
             console.log("📱 Loaded saved location:", location);
+
+            // Parse saved location to extract country and city for country-first flow
+            parseSavedLocationForCountryFirst(location);
           }
 
           console.log("📱 Final userProfile after load:", userProfile);
         } catch (e) {
           console.log("�� Storage not available:", e);
         }
+      }
+
+      function parseSavedLocationForCountryFirst(locationString) {
+        // Try to extract country and city from saved location for the country-first flow
+        console.log("🔍 Parsing saved location for country-first:", locationString);
+
+        // Common patterns: "City, Country" or "City, State, Country"
+        const parts = locationString.split(',').map(part => part.trim());
+
+        if (parts.length >= 2) {
+          const lastPart = parts[parts.length - 1];
+
+          // Map common country names to codes
+          const countryMap = {
+            'United States': 'US',
+            'Canada': 'CA',
+            'United Kingdom': 'GB',
+            'Australia': 'AU',
+            'Germany': 'DE',
+            'France': 'FR',
+            'Spain': 'ES',
+            'Italy': 'IT',
+            'Netherlands': 'NL',
+            'Japan': 'JP',
+            'South Korea': 'KR',
+            'India': 'IN',
+            'Brazil': 'BR',
+            'Mexico': 'MX',
+            'Argentina': 'AR',
+            'South Africa': 'ZA',
+            'Nigeria': 'NG',
+            'Egypt': 'EG',
+            'China': 'CN',
+            'Thailand': 'TH',
+            'Singapore': 'SG',
+            'New Zealand': 'NZ',
+            'Norway': 'NO',
+            'Sweden': 'SE',
+            'Denmark': 'DK',
+            'Finland': 'FI',
+            'Ireland': 'IE',
+            'Switzerland': 'CH',
+            'Austria': 'AT',
+            'Belgium': 'BE',
+            'Portugal': 'PT',
+            'Greece': 'GR',
+            'Poland': 'PL',
+            'Czech Republic': 'CZ',
+            'Hungary': 'HU',
+            'Romania': 'RO',
+            'Bulgaria': 'BG',
+            'Croatia': 'HR',
+            'Slovenia': 'SI',
+            'Slovakia': 'SK',
+            'Lithuania': 'LT',
+            'Latvia': 'LV',
+            'Estonia': 'EE',
+            'Russia': 'RU',
+            'Ukraine': 'UA',
+            'Turkey': 'TR',
+            'Israel': 'IL',
+            'UAE': 'AE',
+            'Saudi Arabia': 'SA'
+          };
+
+          // Check if last part is a known country
+          const countryCode = countryMap[lastPart] || (lastPart.length === 2 ? lastPart.toUpperCase() : null);
+
+          if (countryCode) {
+            // Extract city (first part, or first part if there are 3+ parts)
+            const cityName = parts[0];
+
+            console.log(`🎯 Parsed: City="${cityName}", Country="${countryCode}"`);
+
+            // Pre-fill the country selector if not already set in profile
+            if (!userProfile.countryPreference || userProfile.countryPreference === 'auto') {
+              userProfile.countryPreference = countryCode;
+              console.log(`💾 Auto-set country preference to ${countryCode} from saved location`);
+            }
+
+            return { city: cityName, country: countryCode };
+          }
+        }
+
+        console.log("❓ Could not parse saved location for country-first flow");
+        return null;
       }
 
       // Unit detection based on country and user preference
@@ -1046,6 +1126,15 @@
           document
             .getElementById("locationInputDiv")
             .classList.remove("hidden");
+
+          // Reset country and city selection for new location input
+          document.getElementById("locationCountrySelect").value = userProfile.countryPreference || "";
+          document.getElementById("locationInput").value = "";
+          document.getElementById("cityInputContainer").style.display = "none";
+          document.getElementById("locationInput").disabled = true;
+
+          // Update button state
+          validateLocationAndEnableButton();
         }
 
       // Function to enhance saved location display
@@ -1173,10 +1262,15 @@
           }
         });
 
-        // Update country preference dropdown
-        const countrySelect = document.getElementById("countryPreference");
-        if (countrySelect && userProfile.countryPreference) {
-          countrySelect.value = userProfile.countryPreference;
+        // Update location country select dropdown
+        const locationCountrySelect = document.getElementById("locationCountrySelect");
+        if (locationCountrySelect && userProfile.countryPreference) {
+          locationCountrySelect.value = userProfile.countryPreference;
+          // If country is selected, show city input
+          if (userProfile.countryPreference && userProfile.countryPreference !== 'auto') {
+            selectedCountry = userProfile.countryPreference;
+            handleCountrySelection(userProfile.countryPreference);
+          }
         }
 
         // Update special considerations checkboxes
@@ -1246,18 +1340,6 @@
         }
       }
 
-      function setCountryPreference(country) {
-        console.log("🌍 setCountryPreference called with:", country);
-        userProfile.countryPreference = country;
-
-        // Update currentUserCountry if not auto
-        if (country !== 'auto') {
-          currentUserCountry = country;
-        }
-
-        updateUI();
-        console.log("🌍 Country preference set to:", userProfile.countryPreference);
-      }
 
       function toggleSpecialConsideration(consideration) {
         const index = userProfile.specialConsiderations.indexOf(consideration);
@@ -1298,11 +1380,30 @@
         document.getElementById("savedLocationDiv").classList.add("hidden");
         document.getElementById("locationInputDiv").classList.remove("hidden");
 
+        // Reset country and city selection
+        const countrySelect = document.getElementById("locationCountrySelect");
         const locationInput = document.getElementById("locationInput");
-        locationInput.focus();
-        locationInput.select(); // Select all text for easy replacement
+        const cityContainer = document.getElementById("cityInputContainer");
 
-        console.log("Edit mode activated, savedLocation cleared"); // Debug log
+        // Pre-select user's country preference if available
+        if (userProfile.countryPreference && userProfile.countryPreference !== 'auto') {
+          countrySelect.value = userProfile.countryPreference;
+          selectedCountry = userProfile.countryPreference;
+          cityContainer.style.display = 'block';
+          locationInput.disabled = false;
+          locationInput.focus();
+        } else {
+          countrySelect.value = "";
+          selectedCountry = "";
+          cityContainer.style.display = 'none';
+          locationInput.disabled = true;
+          locationInput.value = "";
+        }
+
+        // Update button state
+        validateLocationAndEnableButton();
+
+        console.log("Edit mode activated, country-first flow enabled"); // Debug log
       }
 
       function getSimpleForecast(currentData) {
@@ -1482,70 +1583,31 @@
       }
 
       async function getWeather() {
-        console.log("getWeather function called!"); // Debug log
+        console.log("🌤️ getWeather function called");
+
         const locationInput = document.getElementById("locationInput");
-        const inputValue = locationInput.value.trim();
+        const countrySelect = document.getElementById("locationCountrySelect");
+        const cityName = locationInput.value.trim();
+        const countryCode = countrySelect.value;
 
-        console.log("getWeather called with input:", inputValue); // Debug log
-        console.log("savedLocation:", savedLocation); // Debug log
-
-        // Use input field value if it exists and we're not in saved mode
-        const location = inputValue || savedLocation;
-
-        if (!location) {
-          showError("Please enter a location");
+        // Validate inputs
+        if (!countryCode) {
+          showError("Please select your country first");
           return;
         }
 
-        // Smart location handling
-        let enhancedLocation = location;
-        let useCoordinates = false;
-        let preferredLocationName = null;
-        let currentSelectedLocation = selectedLocation; // Preserve for later use
-
-        // If user selected a location from autocomplete, use coordinates for precise results
-        if (selectedLocation && selectedLocation.lat && selectedLocation.lon) {
-          enhancedLocation = `lat=${selectedLocation.lat}&lon=${selectedLocation.lon}`;
-          useCoordinates = true;
-
-          // Only use preferred name if we have a proper city name (not just coordinates)
-          if (selectedLocation.name && selectedLocation.name !== "Current Location") {
-            preferredLocationName = formatLocationName(selectedLocation);
-            console.log(
-              "🎯 Using coordinates with known city name:",
-              enhancedLocation,
-              "display name:",
-              preferredLocationName
-            );
-          } else {
-            // For current location, let the API provide the city name
-            preferredLocationName = null;
-            console.log(
-              "📍 Using coordinates for current location, will use API city name:",
-              enhancedLocation,
-              "coords:",
-              selectedLocation.lat,
-              selectedLocation.lon
-            );
-          }
-        } else {
-          // For direct input (like zip codes or typed cities), use the text as-is
-          enhancedLocation = location;
-          useCoordinates = false;
-          console.log("📝 Using text-based location:", enhancedLocation);
+        if (!cityName) {
+          showError("Please enter your city, town, or village");
+          return;
         }
 
-        // Reset selectedLocation for next search (but preserve currentSelectedLocation for this request)
-        selectedLocation = null;
-
-        console.log("Final location to search:", enhancedLocation); // Debug log
+        console.log(`🌍 Searching for weather: ${cityName} in ${countryCode}`);
 
         // Show loading state
-        const button =
-          document.getElementById("getWeatherBtn") ||
-          document.getElementById("quickWeatherBtn");
+        const button = document.getElementById("getWeatherBtn");
+        const btnText = document.getElementById("getWeatherBtnText");
         if (button) {
-          const originalText = button.textContent;
+          const originalText = btnText.textContent;
           button.innerHTML = '<div class="spinner mx-auto"></div>';
           button.disabled = true;
         }
@@ -1553,220 +1615,173 @@
         hideError();
 
         try {
-          // Use secure serverless function instead of direct API calls
-          console.log("Using secure API for:", location); // Debug log
-
-          // Respect user's manual preference, only auto-detect if set to "auto"
+          // Set units based on country and user preference
           if (userProfile.unitPreference !== 'auto') {
-            // User manually chose Imperial or Metric - respect their choice
             currentUnits = userProfile.unitPreference;
-            console.log("🎛️ Using manual unit preference:", currentUnits);
           } else {
-            // Auto mode - detect based on location
-            let detectedUnits = 'imperial';
-            if (currentSelectedLocation && currentSelectedLocation.country) {
-              detectedUnits = detectUnits(currentSelectedLocation.country);
-              currentCountry = currentSelectedLocation.country;
-              console.log("🌍 Auto-detected units based on country:", detectedUnits, "for", currentCountry);
-            } else {
-              console.log("🌍 No country data, defaulting to imperial units");
-            }
-            currentUnits = detectedUnits;
+            currentUnits = detectUnits(countryCode);
           }
+          currentCountry = countryCode;
 
-          console.log("Using units:", currentUnits, "for country:", currentCountry);
+          console.log(`🎛️ Using units: ${currentUnits} for country: ${countryCode}`);
 
-          // Get current weather through secure API with appropriate units
-          const currentUrl = useCoordinates
-            ? `/api/weather?${enhancedLocation}&type=current&units=${currentUnits}`
-            : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=current&units=${currentUnits}`;
+          // Try to find weather data for the location
+          const weatherResult = await findNearestCityWithWeather(cityName, countryCode);
 
-          console.log("🌐 Weather API request details:");
-          console.log("  - useCoordinates:", useCoordinates);
-          console.log("  - enhancedLocation:", enhancedLocation);
-          console.log("  - currentUnits:", currentUnits);
-          console.log("  - Final URL:", currentUrl);
-
-          const currentResponse = await fetch(currentUrl);
-          const currentData = await currentResponse.json();
-
-          console.log("🌤️ Weather API response:");
-          console.log("  - Status:", currentResponse.status);
-          console.log("  - OK:", currentResponse.ok);
-          console.log("  - Data:", currentData);
-
-          if (!currentResponse.ok) {
-            console.error("❌ Weather API error details:");
-            console.error("  - Status:", currentResponse.status);
-            console.error("  - Status Text:", currentResponse.statusText);
-            console.error("  - Error data:", currentData);
-          }
-
-          if (currentResponse.ok) {
-            // Get today's forecast through secure API
+          if (weatherResult) {
+            // Get forecast data
             let forecastData = null;
             try {
-              const forecastUrl = useCoordinates
-                ? `/api/weather?${enhancedLocation}&type=forecast&units=${currentUnits}`
-                : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=forecast&units=${currentUnits}`;
-
+              const forecastUrl = `/api/weather?location=${encodeURIComponent(weatherResult.city + ',' + countryCode)}&type=forecast&units=${currentUnits}`;
               const forecastResponse = await fetch(forecastUrl);
-
               if (forecastResponse.ok) {
                 forecastData = await forecastResponse.json();
-                console.log(
-                  "Forecast data received from secure API:",
-                  forecastData,
-                ); // Debug log
-              } else {
-                console.log("Forecast API failed, continuing without forecast"); // Debug log
               }
             } catch (forecastError) {
-              console.log("Forecast API error:", forecastError); // Debug log
+              console.log("⚠️ Forecast failed:", forecastError);
             }
 
-            // Process today's forecast
+            // Process forecast
             const todaysForecast = forecastData
               ? getTodaysForecast(forecastData)
-              : getSimpleForecast(currentData);
-            console.log("Processed forecast:", todaysForecast); // Debug log
+              : getSimpleForecast(weatherResult.data);
 
-            // Store country info but don't override manual unit preference
-            if (currentData.sys && currentData.sys.country) {
-              const apiCountry = currentData.sys.country;
-              if (!currentCountry || currentCountry !== apiCountry) {
-                currentCountry = apiCountry;
-
-                // Only auto-detect units if user preference is set to "auto"
-                if (userProfile.unitPreference === 'auto') {
-                  const newUnits = detectUnits(apiCountry);
-                  if (newUnits !== currentUnits) {
-                    currentUnits = newUnits;
-                    console.log("Auto-detected units based on API response:", currentUnits, "for country:", currentCountry);
-                  }
-                } else {
-                  console.log("Keeping manual unit preference:", currentUnits, "for country:", currentCountry);
-                }
-              }
+            // Create display location name
+            let locationDisplay = weatherResult.city;
+            if (weatherResult.state) {
+              locationDisplay += `, ${weatherResult.state}`;
             }
+            locationDisplay += `, ${weatherResult.country || getFullCountryName(countryCode)}`;
 
-            // Use preferred location name from autocomplete or format from API response
-            let locationDisplay;
-            if (preferredLocationName) {
-              // Use the full name from autocomplete selection (includes state)
-              locationDisplay = preferredLocationName;
-            } else {
-              // Format from API response
-              locationDisplay = currentData.name;
-              if (currentData.sys.state) {
-                locationDisplay += `, ${currentData.sys.state}`;
-              }
-              locationDisplay += `, ${currentData.sys.country}`;
+            // Add note if not exact match
+            if (!weatherResult.isExact) {
+              locationDisplay += ` (nearest available)`;
+              console.log(`ℹ️ Using nearest city: ${weatherResult.city} instead of ${weatherResult.originalSearch}`);
+
+              // Show info message to user
+              showLocationNote(`Weather data for "${weatherResult.originalSearch}" not available. Showing data for nearest city: ${weatherResult.city}`);
             }
 
             const weatherData = {
               location: locationDisplay,
-              temperature: Math.round(currentData.main.temp),
-              condition: currentData.weather[0].main,
-              humidity: currentData.main.humidity,
-              windSpeed: Math.round(currentData.wind?.speed || 0),
-              feelsLike: Math.round(currentData.main.feels_like),
+              temperature: Math.round(weatherResult.data.main.temp),
+              condition: weatherResult.data.weather[0].main,
+              humidity: weatherResult.data.main.humidity,
+              windSpeed: Math.round(weatherResult.data.wind?.speed || 0),
+              feelsLike: Math.round(weatherResult.data.main.feels_like),
               forecast: todaysForecast,
             };
 
             displayWeather(weatherData);
 
-            // Save the new location
-            savedLocation = location;
+            // Save location for quick access
+            const saveLocation = `${cityName}, ${getFullCountryName(countryCode)}`;
+            savedLocation = saveLocation;
             try {
               localStorage.setItem("weatherWardrobeLocation", savedLocation);
             } catch (e) {
               console.log("Cannot save location");
             }
             updateUI();
+
           } else {
-            console.error("❌ Weather API error:", currentData);
-            const errorMessage = useCoordinates
-              ? `Unable to get weather for your current location (${currentSelectedLocation?.lat?.toFixed(4)}, ${currentSelectedLocation?.lon?.toFixed(4)}). Please try entering a city name manually.`
-              : (currentData.error || 'Location not found. Please try again with a different format (e.g., "New York, NY" or "10001").');
-            showError(errorMessage);
-          }
-        } catch (err) {
-          console.log("Secure API call failed, using demo data:", err);
-
-          // Demo weather data with forecast
-          // Simple demo location handling
-          let demoLocationName = location;
-
-          // If it's a zip code, use demo city name
-          if (location.match(/^\d{5}(-\d{4})?$/)) {
-            demoLocationName = "Demo City";
+            throw new Error("No weather data available");
           }
 
-          // Generate demo weather in appropriate units
-          // Update currentUnits based on user preference for demo data
-          if (userProfile.unitPreference !== 'auto') {
-            currentUnits = userProfile.unitPreference;
-          }
+        } catch (error) {
+          console.error("❌ Weather lookup failed:", error);
 
-          let demoTemp, demoFeelsLike, demoHigh, demoLow, demoWind;
-          console.log("Demo data using units:", currentUnits, "based on preference:", userProfile.unitPreference);
-          if (currentUnits === 'metric') {
-            demoTemp = Math.floor(Math.random() * 30) + 0; // 0-30°C
-            demoFeelsLike = Math.floor(Math.random() * 30) + 0;
-            demoHigh = Math.floor(Math.random() * 15) + 20; // 20-35°C
-            demoLow = Math.floor(Math.random() * 15) + 5; // 5-20°C
-            demoWind = Math.floor(Math.random() * 25) + 5; // 5-30 km/h
-          } else {
-            demoTemp = Math.floor(Math.random() * 50) + 30; // 30-80°F
-            demoFeelsLike = Math.floor(Math.random() * 50) + 30;
-            demoHigh = Math.floor(Math.random() * 20) + 70; // 70-90°F
-            demoLow = Math.floor(Math.random() * 20) + 40; // 40-60°F
-            demoWind = Math.floor(Math.random() * 15) + 2; // 2-17 mph
-          }
+          let errorMessage = `Unable to find weather data for "${cityName}" in ${getFullCountryName(countryCode)}. `;
+          errorMessage += "Please try:\n";
+          errorMessage += "• A larger nearby city\n";
+          errorMessage += "• Different spelling\n";
+          errorMessage += "• Official city name in English";
 
-          const demoWeather = {
-            location: demoLocationName,
-            temperature: demoTemp,
-            condition: ["Clear", "Clouds", "Rain", "Snow"][
-              Math.floor(Math.random() * 4)
-            ],
-            humidity: Math.floor(Math.random() * 40) + 40,
-            windSpeed: demoWind,
-            feelsLike: demoFeelsLike,
-            forecast: {
-              high: demoHigh,
-              low: demoLow,
-              afternoon: ["Sunny", "Cloudy", "Light Rain"][
-                Math.floor(Math.random() * 3)
-              ],
-              evening: ["Clear", "Partly Cloudy", "Overcast"][
-                Math.floor(Math.random() * 3)
-              ],
-              alerts: [`Demo forecast data - units: ${currentUnits}`],
-            },
-          };
-
-          displayWeather(demoWeather);
-
-          // Save location even for demo
-          savedLocation = location;
-          try {
-            localStorage.setItem("weatherWardrobeLocation", savedLocation);
-          } catch (e) {
-            console.log("Cannot save location");
-          }
-          updateUI();
+          showError(errorMessage);
         } finally {
           // Reset button
-          if (button) {
-            button.textContent =
-              button.id === "getWeatherBtn"
-                ? "Get Clothing Advice"
-                : "Get Today's Clothing Advice";
+          if (button && btnText) {
+            button.innerHTML = '<span id="getWeatherBtnText">Get Clothing Advice</span>';
             button.disabled = false;
           }
         }
+      }
+
+      function showLocationNote(message) {
+        // Create or update location note div
+        let noteDiv = document.getElementById('locationNote');
+        if (!noteDiv) {
+          noteDiv = document.createElement('div');
+          noteDiv.id = 'locationNote';
+          noteDiv.className = 'bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 text-blue-700 text-sm';
+
+          const errorDiv = document.getElementById('errorDiv');
+          errorDiv.parentNode.insertBefore(noteDiv, errorDiv);
+        }
+
+        noteDiv.textContent = message;
+        noteDiv.classList.remove('hidden');
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+          noteDiv.classList.add('hidden');
+        }, 5000);
+      }
+
+      function getFullCountryName(countryCode) {
+        const countryNames = {
+          'US': 'United States',
+          'CA': 'Canada',
+          'GB': 'United Kingdom',
+          'AU': 'Australia',
+          'DE': 'Germany',
+          'FR': 'France',
+          'ES': 'Spain',
+          'IT': 'Italy',
+          'NL': 'Netherlands',
+          'JP': 'Japan',
+          'KR': 'South Korea',
+          'IN': 'India',
+          'BR': 'Brazil',
+          'MX': 'Mexico',
+          'AR': 'Argentina',
+          'ZA': 'South Africa',
+          'NG': 'Nigeria',
+          'EG': 'Egypt',
+          'CN': 'China',
+          'TH': 'Thailand',
+          'SG': 'Singapore',
+          'NZ': 'New Zealand',
+          'NO': 'Norway',
+          'SE': 'Sweden',
+          'DK': 'Denmark',
+          'FI': 'Finland',
+          'IE': 'Ireland',
+          'CH': 'Switzerland',
+          'AT': 'Austria',
+          'BE': 'Belgium',
+          'PT': 'Portugal',
+          'GR': 'Greece',
+          'PL': 'Poland',
+          'CZ': 'Czech Republic',
+          'HU': 'Hungary',
+          'RO': 'Romania',
+          'BG': 'Bulgaria',
+          'HR': 'Croatia',
+          'SI': 'Slovenia',
+          'SK': 'Slovakia',
+          'LT': 'Lithuania',
+          'LV': 'Latvia',
+          'EE': 'Estonia',
+          'RU': 'Russia',
+          'UA': 'Ukraine',
+          'TR': 'Turkey',
+          'IL': 'Israel',
+          'AE': 'UAE',
+          'SA': 'Saudi Arabia'
+        };
+
+        return countryNames[countryCode] || countryCode;
       }
 
       function displayWeather(weather) {
@@ -1858,7 +1873,7 @@
           console.log("Displaying forecast:", displayForecast); // Debug log
           let forecastHTML = `
                     <div class="bg-blue-50 rounded-xl p-4 mt-4">
-                        <h4 class="font-semibold text-blue-800 mb-2">📅 Today's Forecast</h4>
+                        <h4 class="font-semibold text-blue-800 mb-2">��� Today's Forecast</h4>
                         <div class="grid grid-cols-2 gap-4 text-sm mb-3">
                             <div class="text-center">
                                 <p class="text-blue-600">High</p>
@@ -2009,10 +2024,17 @@
 
         console.log("🎯 Location input:", value, "trimmed:", trimmedValue);
 
+        // Validate button state
+        validateLocationAndEnableButton();
+
         if (trimmedValue.length === 0) {
           hideLocationSuggestions();
+          selectedLocation = null;
           return;
         }
+
+        // Reset selected location when user types new input
+        selectedLocation = null;
 
         // If it looks like a complete zip code, don't search for suggestions but show it as an option
         if (/^\d{5}(-\d{4})?$/.test(trimmedValue)) {
@@ -2021,13 +2043,17 @@
           return;
         }
 
-        // Debounce search requests
-        searchTimeout = setTimeout(() => {
-          if (trimmedValue.length >= 2) {
-            console.log("🔍 Starting search for:", trimmedValue);
-            searchLocations(trimmedValue);
-          }
-        }, 300);
+        // Debounce search requests - but only search if country is selected
+        if (selectedCountry) {
+          searchTimeout = setTimeout(() => {
+            if (trimmedValue.length >= 2) {
+              console.log(`🔍 Starting search for: ${trimmedValue} in ${selectedCountry}`);
+              searchLocations(trimmedValue);
+            }
+          }, 300);
+        } else {
+          hideLocationSuggestions();
+        }
       }
 
       // Show zip code as a suggestion
@@ -2046,273 +2072,162 @@
 
       // Global variables for location management
       let currentUserCountry = null;
-      let isGettingLocation = false;
+      // Selected country and location state
+      let selectedCountry = "";
+      let selectedLocation = null;
 
-      // Geolocation functions
-      async function getCurrentLocation() {
-        if (isGettingLocation) return;
+      // Country-first location selection functions
+      function handleCountrySelection(countryCode) {
+        console.log("🌍 Country selected:", countryCode);
+        selectedCountry = countryCode;
 
-        const geoBtn = document.getElementById('geoLocationBtn');
-        const errorDiv = document.getElementById('errorDiv');
-        const errorText = document.getElementById('errorText');
+        const cityContainer = document.getElementById('cityInputContainer');
+        const locationInput = document.getElementById('locationInput');
+        const getWeatherBtn = document.getElementById('getWeatherBtn');
+        const btnText = document.getElementById('getWeatherBtnText');
 
-        isGettingLocation = true;
-        geoBtn.disabled = true;
-        geoBtn.innerHTML = '<div class="spinner-sm"></div>';
+        if (countryCode) {
+          // Show city input
+          cityContainer.style.display = 'block';
+          locationInput.disabled = false;
+          locationInput.focus();
 
-        // Hide any previous errors
-        errorDiv.classList.add('hidden');
+          // Update button text
+          btnText.textContent = 'Enter City/Town/Village';
 
-        if (!navigator.geolocation) {
-          showGeolocationError('Geolocation is not supported by this browser.');
-          return;
-        }
-
-        console.log('🌍 Requesting current location...');
-
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            try {
-              const { latitude, longitude } = position.coords;
-              console.log(`📍 Got coordinates: ${latitude}, ${longitude}`);
-
-              // Use reverse geocoding to get location name
-              await reverseGeocode(latitude, longitude);
-
-            } catch (error) {
-              console.error('Error processing location:', error);
-              showGeolocationError('Failed to process your location. Please try manual entry.');
-            }
-          },
-          (error) => {
-            console.error('Geolocation error:', error);
-            let errorMessage = 'Unable to get your location. ';
-
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                errorMessage += 'Location access was denied. Please enable location services and refresh.';
-                break;
-              case error.POSITION_UNAVAILABLE:
-                errorMessage += 'Location information is unavailable.';
-                break;
-              case error.TIMEOUT:
-                errorMessage += 'Location request timed out.';
-                break;
-              default:
-                errorMessage += 'An unknown error occurred.';
-                break;
-            }
-
-            showGeolocationError(errorMessage);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 300000 // 5 minutes
-          }
-        );
-      }
-
-      async function reverseGeocode(lat, lon) {
-        try {
-          console.log(`📍 Getting weather for coordinates: ${lat}, ${lon}`);
-
-          // Set coordinates immediately so weather lookup can use them
-          selectedLocation = {
-            lat: lat,
-            lon: lon,
-            name: 'Current Location',
-            country: 'Unknown'
+          // Update placeholder based on country
+          const countryNames = {
+            'US': 'United States',
+            'CA': 'Canada',
+            'GB': 'United Kingdom',
+            'AU': 'Australia',
+            'DE': 'Germany',
+            'FR': 'France',
+            'ES': 'Spain',
+            'IT': 'Italy',
+            'NL': 'Netherlands',
+            'JP': 'Japan',
+            'KR': 'South Korea',
+            'IN': 'India',
+            'BR': 'Brazil',
+            'MX': 'Mexico'
           };
 
-          // Try to get weather data using coordinates - this will also give us the city name
-          console.log("🧪 Getting weather data for current location...");
+          const countryName = countryNames[countryCode] || 'your country';
+          locationInput.placeholder = `Enter city, town, or village in ${countryName}`;
 
-          const weatherUrl = `/api/weather?lat=${lat}&lon=${lon}&type=current&units=imperial`;
-          const weatherResponse = await fetch(weatherUrl);
-          const weatherData = await weatherResponse.json();
+          // Update current country for unit detection
+          currentCountry = countryCode;
+          currentUnits = detectUnits(countryCode);
 
-          if (weatherResponse.ok && weatherData.name) {
-            // Success! Extract location info from weather response
-            const cityName = weatherData.name;
-            const country = weatherData.sys?.country || 'Unknown';
-            const state = weatherData.sys?.state;
-
-            // Update selectedLocation with real city info
-            selectedLocation = {
-              lat: lat,
-              lon: lon,
-              name: cityName,
-              country: country,
-              state: state,
-              verified: true
-            };
-
-            // Create display name
-            let displayName = cityName;
-            if (state) displayName += `, ${state}`;
-            if (country && country !== 'Unknown') displayName += `, ${country}`;
-
-            document.getElementById('locationInput').value = displayName;
-            addToRecentLocations(selectedLocation, displayName);
-
-            console.log(`✅ Current location: ${displayName}`);
-
-            // Automatically get weather (data is already loaded, but this will trigger UI update)
-            setTimeout(() => {
-              // Use the weather data we already have
-              const forecastUrl = `/api/weather?lat=${lat}&lon=${lon}&type=forecast&units=imperial`;
-              fetch(forecastUrl)
-                .then(response => response.json())
-                .then(forecastData => {
-                  // Process and display weather with existing data
-                  displayWeatherFromCurrentLocation(weatherData, forecastData);
-                })
-                .catch(() => {
-                  // If forecast fails, just display current weather
-                  displayWeatherFromCurrentLocation(weatherData, null);
-                });
-            }, 300);
-
-          } else {
-            // Weather API failed for coordinates - try coordinate-based fallback
-            console.warn("⚠️ Weather API failed for exact coordinates, trying nearby city...");
-
-            // Use a more precise fallback based on coordinates
-            let fallbackCity = determineFallbackCity(lat, lon);
-            console.log(`🔄 Trying fallback: ${fallbackCity}`);
-
-            selectedLocation = {
-              lat: lat,
-              lon: lon,
-              name: fallbackCity.split(',')[0],
-              country: 'US',
-              isApproximate: true
-            };
-
-            document.getElementById('locationInput').value = `${fallbackCity} (near your location)`;
-            addToRecentLocations(selectedLocation, `${fallbackCity} (near your location)`);
-
-            console.log(`✅ Using approximate location: ${fallbackCity}`);
-
-            // Get weather for the fallback city
-            setTimeout(() => {
-              getWeather();
-            }, 300);
-          }
-
-        } catch (error) {
-          console.error('❌ Error with current location:', error);
-          showGeolocationError(`Unable to get weather for your current location (${lat.toFixed(4)}, ${lon.toFixed(4)}). Please try entering a city name manually.`);
-        } finally {
-          resetGeolocationButton();
-        }
-      }
-
-      // Helper function to determine fallback city based on coordinates
-      function determineFallbackCity(lat, lon) {
-        // More precise regional fallbacks
-        if (lat >= 40.5 && lat <= 41.0 && lon >= -74.5 && lon <= -73.8) {
-          return "New York, NY"; // NYC area
-        } else if (lat >= 39.8 && lat <= 40.5 && lon >= -75.0 && lon <= -74.2) {
-          return "Newark, NJ"; // North Jersey
-        } else if (lat >= 39.0 && lat <= 40.0 && lon >= -75.5 && lon <= -74.5) {
-          return "Philadelphia, PA"; // Philly area
-        } else if (lat >= 39.0 && lat <= 40.0 && lon >= -76.0 && lon <= -75.0) {
-          return "Camden, NJ"; // South Jersey
-        } else if (lat >= 40.0 && lat <= 41.0 && lon >= -75.0 && lon <= -74.0) {
-          return "Trenton, NJ"; // Central Jersey
-        } else {
-          // Default fallbacks by region
-          if (lat >= 25 && lat <= 50 && lon >= -125 && lon <= -65) {
-            return "New York, NY"; // Continental US default
-          } else {
-            return "London, UK"; // International default
-          }
-        }
-      }
-
-      // Helper function to display weather when we already have the data from geolocation
-      function displayWeatherFromCurrentLocation(currentData, forecastData) {
-        try {
-          // Process forecast data
-          let todaysForecast = null;
-          if (forecastData && forecastData.list) {
-            const today = new Date().toDateString();
-            const todaysData = forecastData.list.filter(item => {
-              const itemDate = new Date(item.dt * 1000).toDateString();
-              return itemDate === today;
-            });
-
-            if (todaysData.length > 0) {
-              const temps = todaysData.map(item => item.main.temp);
-              todaysForecast = {
-                high: Math.max(...temps),
-                low: Math.min(...temps)
-              };
-            }
-          }
-
-          // Create weather data object
-          const weatherData = {
-            location: selectedLocation.name + (selectedLocation.state ? `, ${selectedLocation.state}` : ''),
-            temperature: Math.round(currentData.main.temp),
-            condition: currentData.weather[0].main,
-            humidity: currentData.main.humidity,
-            windSpeed: Math.round(currentData.wind?.speed || 0),
-            feelsLike: Math.round(currentData.main.feels_like),
-            forecast: todaysForecast,
-          };
-
-          console.log("🌤️ Displaying weather for current location:", weatherData);
-          displayWeather(weatherData);
-
-          // Save location
-          const locationInput = document.getElementById("locationInput");
-          const savedLoc = locationInput.value;
+          // Save country preference
+          userProfile.countryPreference = countryCode;
           try {
-            localStorage.setItem("weatherWardrobeLocation", savedLoc);
+            localStorage.setItem("weatherWardrobeProfile", JSON.stringify(userProfile));
           } catch (e) {
-            console.log("Cannot save location");
+            console.log("Cannot save profile");
           }
-          updateUI();
 
-        } catch (error) {
-          console.error("Error displaying weather from current location:", error);
-          showGeolocationError("Got your location but couldn't display weather. Please try manual search.");
+        } else {
+          // Hide city input
+          cityContainer.style.display = 'none';
+          locationInput.disabled = true;
+          locationInput.value = '';
+
+          // Reset button
+          getWeatherBtn.disabled = true;
+          btnText.textContent = 'Select Country & City First';
+        }
+
+        // Reset location state
+        selectedLocation = null;
+        hideLocationSuggestions();
+      }
+
+      function validateLocationAndEnableButton() {
+        const countrySelect = document.getElementById('locationCountrySelect');
+        const locationInput = document.getElementById('locationInput');
+        const getWeatherBtn = document.getElementById('getWeatherBtn');
+        const btnText = document.getElementById('getWeatherBtnText');
+
+        const hasCountry = countrySelect.value !== '';
+        const hasLocation = locationInput.value.trim() !== '';
+
+        if (hasCountry && hasLocation) {
+          getWeatherBtn.disabled = false;
+          btnText.textContent = 'Get Clothing Advice';
+        } else if (hasCountry) {
+          getWeatherBtn.disabled = true;
+          btnText.textContent = 'Enter City/Town/Village';
+        } else {
+          getWeatherBtn.disabled = true;
+          btnText.textContent = 'Select Country & City First';
         }
       }
 
-      function showGeolocationError(message) {
-        const errorDiv = document.getElementById('errorDiv');
-        const errorText = document.getElementById('errorText');
+      async function findNearestCityWithWeather(cityName, countryCode) {
+        console.log(`🔍 Searching for weather data for ${cityName} in ${countryCode}`);
 
-        errorText.textContent = message;
-        errorDiv.classList.remove('hidden');
+        try {
+          // First, try the exact city name
+          const searchQuery = `${cityName},${countryCode}`;
+          const weatherUrl = `/api/weather?location=${encodeURIComponent(searchQuery)}&units=${currentUnits}`;
+          const response = await fetch(weatherUrl);
 
-        resetGeolocationButton();
-      }
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`✅ Found weather data for ${cityName}`);
+            return { city: cityName, data: data, isExact: true };
+          }
 
-      function resetGeolocationButton() {
-        const geoBtn = document.getElementById('geoLocationBtn');
-        isGettingLocation = false;
-        geoBtn.disabled = false;
-        geoBtn.innerHTML = `
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        `;
+          // If exact match fails, try to find nearby cities using geocoding
+          console.log(`⚠️ No exact match for ${cityName}, searching for nearby cities...`);
+
+          const geocodingUrl = `/api/geocoding?q=${encodeURIComponent(cityName + ',' + countryCode)}&limit=5`;
+          const geoResponse = await fetch(geocodingUrl);
+
+          if (geoResponse.ok) {
+            const locations = await geoResponse.json();
+
+            // Try each location returned by geocoding
+            for (const location of locations) {
+              try {
+                const nearbyWeatherUrl = `/api/weather?lat=${location.lat}&lon=${location.lon}&units=${currentUnits}`;
+                const nearbyResponse = await fetch(nearbyWeatherUrl);
+
+                if (nearbyResponse.ok) {
+                  const nearbyData = await nearbyResponse.json();
+                  console.log(`✅ Found weather data for nearby city: ${location.name}`);
+                  return {
+                    city: location.name,
+                    state: location.state,
+                    country: location.country,
+                    data: nearbyData,
+                    isExact: false,
+                    originalSearch: cityName
+                  };
+                }
+              } catch (nearbyError) {
+                console.log(`❌ Failed to get weather for ${location.name}:`, nearbyError);
+                continue;
+              }
+            }
+          }
+
+          throw new Error(`No weather data available for ${cityName} or nearby areas`);
+
+        } catch (error) {
+          console.error(`❌ Error finding weather data for ${cityName}:`, error);
+          throw error;
+        }
       }
 
       async function searchLocations(query) {
         const suggestionsList = document.getElementById("suggestionsList");
         const loadingDiv = document.getElementById("loadingSuggestion");
-        const suggestionsContainer = document.getElementById(
-          "locationSuggestions",
-        );
+        const suggestionsContainer = document.getElementById("locationSuggestions");
 
-        if (query.trim().length < 2) {
+        if (query.trim().length < 2 || !selectedCountry) {
           suggestionsContainer.classList.add("hidden");
           return;
         }
@@ -2322,51 +2237,79 @@
         loadingDiv.classList.remove("hidden");
         suggestionsContainer.classList.remove("hidden");
 
-        console.log("🔍 Searching for locations:", query);
+        console.log(`🔍 Searching for locations: "${query}" in ${selectedCountry}`);
 
         try {
+          // Use OpenWeather geocoding API to search within the selected country
+          const searchQuery = `${query.trim()},${selectedCountry}`;
+          const geocodingUrl = `/api/geocoding?q=${encodeURIComponent(searchQuery)}&limit=5`;
+
+          const response = await fetch(geocodingUrl);
           let locations = [];
 
-          // Fix common typos first
-          const correctedQuery = fixCommonTypos(query);
-
-          // Create smart suggestions based on query
-          locations = createSmartLocationSuggestions(correctedQuery);
-
-          console.log(`🔍 Created ${locations.length} suggestions for "${correctedQuery}"`);
-
-          // Smart prioritization: Local results first, but show all results
-          if (locations.length > 0) {
-            locations = smartPrioritizeLocations(locations, correctedQuery);
+          if (response.ok) {
+            locations = await response.json();
+            console.log(`🔍 OpenWeather found ${locations.length} suggestions for "${query}" in ${selectedCountry}`);
+          } else {
+            console.log('⚠️ OpenWeather geocoding failed, using fallback');
+            // Fallback to simple text matching
+            locations = createSimpleFallbackSuggestions(query, selectedCountry);
           }
-
-          // This section has been simplified - no longer needed
-
-          console.log(`🔍 Found ${locations.length} suggestions for "${correctedQuery}"`);
 
           if (locations.length > 0) {
             displayLocationSuggestions(locations);
           } else {
+            const countryName = getFullCountryName(selectedCountry);
             suggestionsList.innerHTML = `
               <div class="px-4 py-2 text-sm text-gray-500">
                 <div class="font-medium mb-1">No locations found for "${query}"</div>
                 <div class="text-xs">
-                  💡 Try: <strong>"${query}, NJ"</strong> or use a ZIP code
+                  💡 Try a larger nearby city in ${countryName}
                 </div>
               </div>
             `;
           }
         } catch (error) {
-          console.error('Search error:', error);
+          console.error('🔍 Search error:', error);
+          const countryName = getFullCountryName(selectedCountry);
           suggestionsList.innerHTML = `
             <div class="px-4 py-2 text-sm text-gray-500">
               <div class="font-medium mb-1">Unable to search locations</div>
-              <div class="text-xs">Try entering a ZIP code or "City, State" format</div>
+              <div class="text-xs">Try a major city name in ${countryName}</div>
             </div>
           `;
         }
 
         loadingDiv.classList.add("hidden");
+      }
+
+      function createSimpleFallbackSuggestions(query, countryCode) {
+        // Simple fallback suggestions for major cities when API fails
+        const majorCities = {
+          'US': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose'],
+          'CA': ['Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Ottawa', 'Edmonton', 'Mississauga', 'Winnipeg', 'Quebec City', 'Hamilton'],
+          'GB': ['London', 'Birmingham', 'Manchester', 'Liverpool', 'Sheffield', 'Bristol', 'Glasgow', 'Leicester', 'Edinburgh', 'Leeds'],
+          'AU': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide', 'Gold Coast', 'Newcastle', 'Canberra', 'Wollongong', 'Logan'],
+          'DE': ['Berlin', 'Hamburg', 'Munich', 'Cologne', 'Frankfurt', 'Stuttgart', 'Düsseldorf', 'Dortmund', 'Essen', 'Leipzig'],
+          'FR': ['Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice', 'Nantes', 'Strasbourg', 'Montpellier', 'Bordeaux', 'Lille'],
+          'ES': ['Madrid', 'Barcelona', 'Valencia', 'Seville', 'Zaragoza', 'Málaga', 'Murcia', 'Palma', 'Las Palmas', 'Bilbao'],
+          'IT': ['Rome', 'Milan', 'Naples', 'Turin', 'Palermo', 'Genoa', 'Bologna', 'Florence', 'Bari', 'Catania']
+        };
+
+        const cities = majorCities[countryCode] || [];
+        const queryLower = query.toLowerCase();
+
+        return cities
+          .filter(city => city.toLowerCase().includes(queryLower))
+          .slice(0, 3)
+          .map(city => ({
+            name: city,
+            country: countryCode,
+            state: null,
+            lat: null,
+            lon: null,
+            isFallback: true
+          }));
       }
 
       // Fix common typing mistakes
@@ -2759,7 +2702,7 @@
             statusText = "💡 Try adding state (e.g., \"" + location.name + ", NJ\")";
             statusClass = "text-xs text-orange-600";
           } else if (location.userInput) {
-            statusText = "📝 As entered";
+            statusText = "�� As entered";
             statusClass = "text-xs text-gray-600";
           } else {
             statusText = "📍 Location";

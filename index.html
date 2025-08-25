@@ -1410,7 +1410,7 @@
 
         console.log("Edit mode activated, country-first flow enabled");
       }
-      function handleCountrySelection(countryCode) {
+      window.handleCountrySelection = function(countryCode) {
         console.log("🌍 Country selected:", countryCode);
         selectedCountry = countryCode;
 

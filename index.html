@@ -1526,13 +1526,26 @@
             ? `/api/weather?${enhancedLocation}&type=current&units=${currentUnits}`
             : `/api/weather?location=${encodeURIComponent(enhancedLocation)}&type=current&units=${currentUnits}`;
 
-          console.log("🌐 Making weather API request to:", currentUrl);
+          console.log("🌐 Weather API request details:");
+          console.log("  - useCoordinates:", useCoordinates);
+          console.log("  - enhancedLocation:", enhancedLocation);
+          console.log("  - currentUnits:", currentUnits);
+          console.log("  - Final URL:", currentUrl);
 
           const currentResponse = await fetch(currentUrl);
           const currentData = await currentResponse.json();
 
-          console.log("🌤️ Weather API response status:", currentResponse.status);
-          console.log("🌤️ Weather API response data:", currentData);
+          console.log("🌤️ Weather API response:");
+          console.log("  - Status:", currentResponse.status);
+          console.log("  - OK:", currentResponse.ok);
+          console.log("  - Data:", currentData);
+
+          if (!currentResponse.ok) {
+            console.error("❌ Weather API error details:");
+            console.error("  - Status:", currentResponse.status);
+            console.error("  - Status Text:", currentResponse.statusText);
+            console.error("  - Error data:", currentData);
+          }
 
           if (currentResponse.ok) {
             // Get today's forecast through secure API
@@ -2029,8 +2042,9 @@
 
       async function reverseGeocode(lat, lon) {
         try {
-          // For now, use coordinates directly since we don't have reverse geocoding API endpoint
-          // This still allows getting weather data for current location
+          // Try to get weather directly using coordinates first
+          console.log(`📍 Getting weather for coordinates: ${lat}, ${lon}`);
+
           selectedLocation = {
             lat: lat,
             lon: lon,
@@ -2038,23 +2052,96 @@
             country: 'Unknown'
           };
 
-          // Set a user-friendly display name
-          const displayName = `Current Location (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-          document.getElementById('locationInput').value = displayName;
+          // Test the weather API with coordinates first
+          const testUrl = `/api/weather?lat=${lat}&lon=${lon}&type=current&units=imperial`;
+          console.log("🧪 Testing weather API with coordinates:", testUrl);
 
-          // Add to recent locations
-          addToRecentLocations(selectedLocation, displayName);
+          const testResponse = await fetch(testUrl);
+          const testData = await testResponse.json();
 
-          console.log(`📍 Current location set: ${displayName}`);
+          if (testResponse.ok && testData.name) {
+            // Success! Use the city name from the weather API
+            const cityName = testData.name;
+            const country = testData.sys?.country || 'Unknown';
+            const state = testData.sys?.state;
 
-          // Automatically get weather for current location
-          setTimeout(() => {
-            getWeather();
-          }, 500);
+            // Update selectedLocation with the real city info
+            selectedLocation = {
+              lat: lat,
+              lon: lon,
+              name: cityName,
+              country: country,
+              state: state
+            };
+
+            // Create a proper display name
+            let displayName = cityName;
+            if (state) displayName += `, ${state}`;
+            if (country) displayName += `, ${country}`;
+
+            document.getElementById('locationInput').value = displayName;
+            addToRecentLocations(selectedLocation, displayName);
+
+            console.log(`✅ Current location resolved to: ${displayName}`);
+
+            // Automatically get weather for current location
+            setTimeout(() => {
+              getWeather();
+            }, 500);
+
+          } else {
+            // Weather API failed with coordinates, try fallback to nearest major city
+            console.warn("⚠️ Weather API failed for coordinates, trying fallback...");
+
+            // Simple fallback based on coordinate ranges (US East Coast area)
+            let fallbackCity = "New York, NY"; // Default fallback
+
+            // New Jersey/NYC area
+            if (lat >= 39.5 && lat <= 41.5 && lon >= -75.5 && lon <= -73.5) {
+              fallbackCity = "Newark, NJ";
+            }
+            // Philadelphia area
+            else if (lat >= 39.0 && lat <= 40.5 && lon >= -76.0 && lon <= -74.5) {
+              fallbackCity = "Philadelphia, PA";
+            }
+
+            console.log(`🔄 Trying fallback city: ${fallbackCity}`);
+
+            // Try the fallback city
+            const fallbackUrl = `/api/weather?location=${encodeURIComponent(fallbackCity)}&type=current&units=imperial`;
+            const fallbackResponse = await fetch(fallbackUrl);
+
+            if (fallbackResponse.ok) {
+              const fallbackData = await fallbackResponse.json();
+
+              selectedLocation = {
+                lat: lat,
+                lon: lon,
+                name: fallbackData.name,
+                country: fallbackData.sys?.country,
+                state: fallbackData.sys?.state
+              };
+
+              let displayName = `${fallbackData.name} (near your location)`;
+              if (fallbackData.sys?.state) displayName = `${fallbackData.name}, ${fallbackData.sys.state} (near your location)`;
+
+              document.getElementById('locationInput').value = displayName;
+              addToRecentLocations(selectedLocation, displayName);
+
+              console.log(`✅ Using fallback location: ${displayName}`);
+
+              setTimeout(() => {
+                getWeather();
+              }, 500);
+
+            } else {
+              throw new Error(`Weather lookup failed for both coordinates and fallback city: ${testData.error || 'Unknown error'}`);
+            }
+          }
 
         } catch (error) {
-          console.error('Error setting current location:', error);
-          showGeolocationError('Failed to set your current location. Please try manual entry.');
+          console.error('❌ Error with current location:', error);
+          showGeolocationError(`Unable to get weather for your current location. ${error.message || 'Please try entering a city name manually.'}`);
         } finally {
           resetGeolocationButton();
         }

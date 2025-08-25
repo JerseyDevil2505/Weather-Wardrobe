@@ -1033,10 +1033,10 @@
           welcomeText.textContent = `Hello, ${userProfile.name}!`;
         }
 
-        // Update location display
+        // Update location display with enhanced formatting
         if (savedLocation) {
-          document.getElementById("savedLocationText").textContent =
-            savedLocation;
+          const enhancedLocationText = enhanceSavedLocationDisplay(savedLocation);
+          document.getElementById("savedLocationText").textContent = enhancedLocationText;
           document
             .getElementById("savedLocationDiv")
             .classList.remove("hidden");
@@ -1047,6 +1047,61 @@
             .getElementById("locationInputDiv")
             .classList.remove("hidden");
         }
+
+      // Function to enhance saved location display
+      function enhanceSavedLocationDisplay(locationString) {
+        console.log("🏷️ Enhancing saved location display:", locationString);
+
+        // If it ends with ", US", try to enhance it
+        if (locationString.endsWith(", US")) {
+          const cityName = locationString.replace(", US", "");
+
+          // Common NJ cities that might be showing as "City, US"
+          const njCities = {
+            "Riverside": "Riverside, New Jersey",
+            "Newark": "Newark, New Jersey",
+            "Trenton": "Trenton, New Jersey",
+            "Camden": "Camden, New Jersey",
+            "Jersey City": "Jersey City, New Jersey",
+            "Paterson": "Paterson, New Jersey",
+            "Elizabeth": "Elizabeth, New Jersey",
+            "Edison": "Edison, New Jersey",
+            "Woodbridge": "Woodbridge, New Jersey",
+            "Lakewood": "Lakewood, New Jersey",
+            "Toms River": "Toms River, New Jersey",
+            "Hamilton": "Hamilton, New Jersey",
+            "Clifton": "Clifton, New Jersey",
+            "Brick": "Brick, New Jersey",
+            "Cherry Hill": "Cherry Hill, New Jersey",
+            "Passaic": "Passaic, New Jersey",
+            "Union City": "Union City, New Jersey",
+            "Vineland": "Vineland, New Jersey",
+            "New Brunswick": "New Brunswick, New Jersey",
+            "Wayne": "Wayne, New Jersey",
+            "Irvington": "Irvington, New Jersey"
+          };
+
+          if (njCities[cityName]) {
+            console.log(`🏷️ Enhanced "${locationString}" to "${njCities[cityName]}"`);
+            return njCities[cityName];
+          }
+
+          // If user has country preference set, use that
+          const countryPref = userProfile.countryPreference;
+          if (countryPref && countryPref !== 'auto') {
+            const fullCountryName = getFullCountryName(countryPref);
+            const enhanced = `${cityName}, ${fullCountryName}`;
+            console.log(`🏷️ Enhanced "${locationString}" to "${enhanced}" using country preference`);
+            return enhanced;
+          }
+
+          // Default enhancement for US locations
+          return `${cityName}, United States`;
+        }
+
+        // Return as-is if it doesn't need enhancement
+        return locationString;
+      }
 
         // Update profile form
         if (userProfile.name) {
@@ -1741,7 +1796,7 @@
           } else {
             console.log("🔄 Converting imperial to metric for display");
           }
-          console.log("🔄 Before conversion - temp:", displayTemp, "feelsLike:", displayFeelsLike, "wind:", displayWindSpeed);
+          console.log("��� Before conversion - temp:", displayTemp, "feelsLike:", displayFeelsLike, "wind:", displayWindSpeed);
 
           displayTemp = fahrenheitToCelsius(weather.temperature);
           displayFeelsLike = fahrenheitToCelsius(weather.feelsLike);
@@ -2272,33 +2327,92 @@
         try {
           let locations = [];
 
-          // SIMPLIFIED: Just try the basic geocoding API first
-          console.log("🔍 DEBUGGING: Trying basic geocoding API...");
-          const response = await fetch(`/api/geocoding?q=${encodeURIComponent(query)}&limit=8`);
+          // Strategy 1: Search as-is (works for international locations)
+          console.log("🔍 DEBUGGING: Trying basic search...");
+          await tryBasicSearch(query, locations);
 
-          console.log("🔍 DEBUGGING: API Response status:", response.status);
-          console.log("🔍 DEBUGGING: API Response ok:", response.ok);
+          // Strategy 2: If no results and no comma, try with country preference (for local searches)
+          if (locations.length === 0 && !query.includes(',')) {
+            const countryPref = userProfile.countryPreference;
+            if (countryPref && countryPref !== 'auto') {
+              console.log(`🔍 DEBUGGING: Trying with country preference: ${countryPref}`);
+              await tryBasicSearch(`${query}, ${countryPref}`, locations);
+            } else {
+              // Default to US for American users, but don't limit international searches
+              console.log("🔍 DEBUGGING: Trying with US default...");
+              await tryBasicSearch(`${query}, US`, locations);
+            }
+          }
 
-          if (response.ok) {
-            const apiLocations = await response.json();
-            console.log("🔍 DEBUGGING: API returned data:", apiLocations);
-            console.log("🔍 DEBUGGING: Number of locations:", apiLocations.length);
+          // Strategy 3: If still no results, try some intelligent variants
+          if (locations.length === 0 && !query.includes(',')) {
+            console.log("🔍 DEBUGGING: Trying intelligent variants...");
+            const variants = [
+              `${query} city`,
+              `${query}, France`, // Common travel destination
+              `${query}, UK`,     // Common travel destination
+              `${query}, CA`,     // Common for US users
+            ];
 
-            // Convert API response to our format
-            apiLocations.forEach(location => {
-              console.log("🔍 DEBUGGING: Processing location:", location);
-              locations.push({
-                name: location.name,
-                state: location.state,
-                country: location.country,
-                lat: location.lat,
-                lon: location.lon,
-                verified: true
-              });
-            });
-          } else {
-            const errorData = await response.json();
-            console.error("🔍 DEBUGGING: API Error:", errorData);
+            for (const variant of variants) {
+              await tryBasicSearch(variant, locations);
+              if (locations.length > 0) {
+                console.log(`🔍 DEBUGGING: Found results with: ${variant}`);
+                break;
+              }
+            }
+          }
+
+          async function tryBasicSearch(searchQuery, locationsArray) {
+            try {
+              console.log(`🔍 DEBUGGING: API call for: "${searchQuery}"`);
+              console.log(`🔍 DEBUGGING: Current URL:`, window.location.href);
+
+              // Use relative URL that works with current deployment
+              const apiUrl = `/api/geocoding?q=${encodeURIComponent(searchQuery)}&limit=8`;
+              console.log(`🔍 DEBUGGING: Full API URL:`, new URL(apiUrl, window.location.origin).href);
+
+              const response = await fetch(apiUrl);
+              console.log(`🔍 DEBUGGING: Response status:`, response.status);
+              console.log(`🔍 DEBUGGING: Response headers:`, response.headers);
+
+              if (response.ok) {
+                const apiLocations = await response.json();
+                console.log(`🔍 DEBUGGING: Found ${apiLocations.length} results for "${searchQuery}"`);
+                console.log(`🔍 DEBUGGING: Raw API response:`, apiLocations);
+
+                apiLocations.forEach(location => {
+                  locationsArray.push({
+                    name: location.name,
+                    state: location.state,
+                    country: location.country,
+                    lat: location.lat,
+                    lon: location.lon,
+                    verified: true
+                  });
+                });
+              } else {
+                // Try to read the error response
+                const errorText = await response.text();
+                console.log(`🔍 DEBUGGING: API error for "${searchQuery}":`, response.status, errorText.substring(0, 200));
+
+                // If geocoding API is not available, create a fallback suggestion
+                if (response.status === 404) {
+                  console.log(`🔍 DEBUGGING: Geocoding API not available, creating fallback suggestion`);
+                  locationsArray.push({
+                    name: searchQuery.split(',')[0],
+                    state: searchQuery.includes(',') ? searchQuery.split(',')[1].trim() : undefined,
+                    country: 'Unknown',
+                    lat: null,
+                    lon: null,
+                    verified: false,
+                    fallback: true
+                  });
+                }
+              }
+            } catch (error) {
+              console.log(`🔍 DEBUGGING: Network error for "${searchQuery}":`, error.message);
+            }
           }
 
           // Handle zip codes
@@ -2313,7 +2427,12 @@
             });
           }
 
-          console.log(`🔍 DEBUGGING: Final locations array:`, locations);
+          // Smart prioritization: Local results first, but show all results
+          if (locations.length > 0) {
+            locations = smartPrioritizeLocations(locations, query);
+          }
+
+          console.log(`🔍 DEBUGGING: Final prioritized locations:`, locations);
           console.log(`🔍 DEBUGGING: Total locations found: ${locations.length}`);
 
           if (locations.length > 0) {
@@ -2403,6 +2522,51 @@
           if (!aHasState && bHasState) return 1;
 
           // Priority 5: Alphabetical by name
+          return a.name.localeCompare(b.name);
+        });
+      }
+
+      // Smart prioritization for location results
+      function smartPrioritizeLocations(locations, originalQuery) {
+        console.log("🎯 Prioritizing locations for query:", originalQuery);
+
+        const countryPref = userProfile.countryPreference || 'auto';
+        const queryLower = originalQuery.toLowerCase();
+
+        return locations.sort((a, b) => {
+          // Priority 1: Exact name match
+          const aExact = a.name.toLowerCase() === queryLower;
+          const bExact = b.name.toLowerCase() === queryLower;
+          if (aExact && !bExact) return -1;
+          if (!aExact && bExact) return 1;
+
+          // Priority 2: Verified locations over fallbacks
+          if (a.verified && !b.verified) return -1;
+          if (!a.verified && b.verified) return 1;
+
+          // Priority 3: Country preference (but don't exclude others)
+          if (countryPref !== 'auto') {
+            const aCountryMatch = a.country === countryPref;
+            const bCountryMatch = b.country === countryPref;
+            if (aCountryMatch && !bCountryMatch) return -1;
+            if (!aCountryMatch && bCountryMatch) return 1;
+          }
+
+          // Priority 4: US locations (if no specific preference) - helps local users
+          if (countryPref === 'auto') {
+            const aUS = a.country === 'US';
+            const bUS = b.country === 'US';
+            if (aUS && !bUS) return -1;
+            if (!aUS && bUS) return 1;
+          }
+
+          // Priority 5: Locations with state information (more specific)
+          const aHasState = a.state && a.state !== 'Unknown';
+          const bHasState = b.state && b.state !== 'Unknown';
+          if (aHasState && !bHasState) return -1;
+          if (!aHasState && bHasState) return 1;
+
+          // Priority 6: Alphabetical by name
           return a.name.localeCompare(b.name);
         });
       }

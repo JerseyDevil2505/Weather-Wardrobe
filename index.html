@@ -1578,6 +1578,16 @@
       }
 
       function selectLocation(location, displayName) {
+        // Handle zip codes specially
+        if (location.isZipCode) {
+          document.getElementById("locationInput").value = location.name;
+          selectedLocation = location.name; // Just store the zip as a string
+          hideLocationSuggestions();
+          validateLocationAndEnableButton();
+          return;
+        }
+        
+        // Rest of the existing function for normal locations
         selectedLocation = location;
         document.getElementById("locationInput").value = displayName;
         hideLocationSuggestions();

@@ -2365,21 +2365,56 @@
 
           async function tryBasicSearch(searchQuery, locationsArray) {
             try {
-              console.log(`🔍 DEBUGGING: API call for: "${searchQuery}"`);
+              // Fix common typos before searching
+              const correctedQuery = fixCommonTypos(searchQuery);
+              if (correctedQuery !== searchQuery) {
+                console.log(`🔤 Auto-corrected "${searchQuery}" to "${correctedQuery}"`);
+              }
+
+              console.log(`🔍 DEBUGGING: API call for: "${correctedQuery}"`);
               console.log(`🔍 DEBUGGING: Current URL:`, window.location.href);
 
-              // Use relative URL that works with current deployment
-              const apiUrl = `/api/geocoding?q=${encodeURIComponent(searchQuery)}&limit=8`;
-              console.log(`🔍 DEBUGGING: Full API URL:`, new URL(apiUrl, window.location.origin).href);
+              // Force relative URL to work with current domain (Fly.dev)
+              const apiUrl = `./api/geocoding?q=${encodeURIComponent(correctedQuery)}&limit=8`;
+              const fullUrl = new URL(apiUrl, window.location.origin).href;
+              console.log(`🔍 DEBUGGING: Full API URL:`, fullUrl);
+
+              // Double-check we're not calling the wrong domain
+              if (fullUrl.includes('vercel.app')) {
+                console.error('🚨 WRONG DOMAIN DETECTED! Forcing Fly.dev URL...');
+                const flyUrl = `https://ffbb79c8c2994dbbbc34059220b8e2c1-0114a91bb9cd4baf85fdd5594.fly.dev/api/geocoding?q=${encodeURIComponent(correctedQuery)}&limit=8`;
+                console.log(`🔍 DEBUGGING: Using Fly.dev URL:`, flyUrl);
+                const response = await fetch(flyUrl);
+                console.log(`🔍 DEBUGGING: Fly.dev Response status:`, response.status);
+
+                if (response.ok) {
+                  const apiLocations = await response.json();
+                  console.log(`✅ SUCCESS with Fly.dev! Found ${apiLocations.length} results`);
+
+                  apiLocations.forEach(location => {
+                    locationsArray.push({
+                      name: location.name,
+                      state: location.state,
+                      country: location.country,
+                      lat: location.lat,
+                      lon: location.lon,
+                      verified: true
+                    });
+                  });
+                } else {
+                  console.log(`❌ Fly.dev API also failed:`, response.status);
+                  // Create a manual suggestion as fallback
+                  createManualSuggestion(correctedQuery, locationsArray);
+                }
+                return;
+              }
 
               const response = await fetch(apiUrl);
               console.log(`🔍 DEBUGGING: Response status:`, response.status);
-              console.log(`🔍 DEBUGGING: Response headers:`, response.headers);
 
               if (response.ok) {
                 const apiLocations = await response.json();
-                console.log(`🔍 DEBUGGING: Found ${apiLocations.length} results for "${searchQuery}"`);
-                console.log(`🔍 DEBUGGING: Raw API response:`, apiLocations);
+                console.log(`🔍 DEBUGGING: Found ${apiLocations.length} results for "${correctedQuery}"`);
 
                 apiLocations.forEach(location => {
                   locationsArray.push({
@@ -2392,26 +2427,74 @@
                   });
                 });
               } else {
-                // Try to read the error response
-                const errorText = await response.text();
-                console.log(`🔍 DEBUGGING: API error for "${searchQuery}":`, response.status, errorText.substring(0, 200));
-
-                // If geocoding API is not available, create a fallback suggestion
-                if (response.status === 404) {
-                  console.log(`🔍 DEBUGGING: Geocoding API not available, creating fallback suggestion`);
-                  locationsArray.push({
-                    name: searchQuery.split(',')[0],
-                    state: searchQuery.includes(',') ? searchQuery.split(',')[1].trim() : undefined,
-                    country: 'Unknown',
-                    lat: null,
-                    lon: null,
-                    verified: false,
-                    fallback: true
-                  });
-                }
+                console.log(`🔍 DEBUGGING: API failed, status:`, response.status);
+                createManualSuggestion(correctedQuery, locationsArray);
               }
             } catch (error) {
-              console.log(`🔍 DEBUGGING: Network error for "${searchQuery}":`, error.message);
+              console.log(`🔍 DEBUGGING: Network error:`, error.message);
+              createManualSuggestion(searchQuery, locationsArray);
+            }
+          }
+
+          // Fix common typing mistakes
+          function fixCommonTypos(query) {
+            const corrections = {
+              'riverisde': 'riverside',
+              'philadelpia': 'philadelphia',
+              'pittsburg': 'pittsburgh',
+              'detrooit': 'detroit',
+              'atlana': 'atlanta',
+              'chigaco': 'chicago',
+              'huston': 'houston',
+              'phoneix': 'phoenix',
+              'mimai': 'miami',
+              'delraan': 'delran',
+              'delarn': 'delran',
+              'camdem': 'camden',
+              'tretnon': 'trenton'
+            };
+
+            const lowerQuery = query.toLowerCase();
+            return corrections[lowerQuery] || query;
+          }
+
+          // Create manual suggestions when API fails
+          function createManualSuggestion(query, locationsArray) {
+            console.log(`🔍 Creating manual suggestion for: "${query}"`);
+
+            // Common NJ cities - if user searches for these, create suggestions
+            const njCities = {
+              'riverside': { name: 'Riverside', state: 'NJ', country: 'US' },
+              'delran': { name: 'Delran', state: 'NJ', country: 'US' },
+              'newark': { name: 'Newark', state: 'NJ', country: 'US' },
+              'trenton': { name: 'Trenton', state: 'NJ', country: 'US' },
+              'camden': { name: 'Camden', state: 'NJ', country: 'US' },
+              'jersey city': { name: 'Jersey City', state: 'NJ', country: 'US' },
+              'paterson': { name: 'Paterson', state: 'NJ', country: 'US' }
+            };
+
+            const lowerQuery = query.toLowerCase().split(',')[0].trim();
+
+            if (njCities[lowerQuery]) {
+              console.log(`✅ Found manual suggestion for: ${lowerQuery}`);
+              locationsArray.push({
+                ...njCities[lowerQuery],
+                lat: null,
+                lon: null,
+                verified: false,
+                manual: true
+              });
+            } else {
+              // Generic fallback
+              locationsArray.push({
+                name: query.split(',')[0],
+                state: query.includes(',') ? query.split(',')[1].trim() : undefined,
+                country: 'Unknown',
+                lat: null,
+                lon: null,
+                verified: false,
+                fallback: true
+              });
             }
           }
 
@@ -2653,6 +2736,9 @@
           if (location.isZipCode) {
             statusText = "📮 ZIP Code";
             statusClass = "text-xs text-blue-600";
+          } else if (location.manual) {
+            statusText = "🏠 Local suggestion (API unavailable)";
+            statusClass = "text-xs text-purple-600";
           } else if (location.verified) {
             if (isDuplicate) {
               // For duplicates, emphasize the state/country difference
@@ -2662,6 +2748,9 @@
               statusText = "✅ Verified location";
               statusClass = "text-xs text-green-600";
             }
+          } else if (location.fallback) {
+            statusText = "⚠️ Fallback suggestion";
+            statusClass = "text-xs text-orange-600";
           } else if (location.isApproximate) {
             statusText = "📍 Approximate location";
             statusClass = "text-xs text-orange-600";

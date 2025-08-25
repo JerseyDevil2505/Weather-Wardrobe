@@ -188,6 +188,71 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Default Country/Region</label
+              >
+              <select
+                id="countryPreference"
+                onchange="setCountryPreference(this.value)"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="auto">Auto-detect from location</option>
+                <option value="US">United States</option>
+                <option value="CA">Canada</option>
+                <option value="GB">United Kingdom</option>
+                <option value="AU">Australia</option>
+                <option value="DE">Germany</option>
+                <option value="FR">France</option>
+                <option value="ES">Spain</option>
+                <option value="IT">Italy</option>
+                <option value="NL">Netherlands</option>
+                <option value="JP">Japan</option>
+                <option value="KR">South Korea</option>
+                <option value="IN">India</option>
+                <option value="BR">Brazil</option>
+                <option value="MX">Mexico</option>
+                <option value="AR">Argentina</option>
+                <option value="ZA">South Africa</option>
+                <option value="NG">Nigeria</option>
+                <option value="EG">Egypt</option>
+                <option value="CN">China</option>
+                <option value="TH">Thailand</option>
+                <option value="SG">Singapore</option>
+                <option value="NZ">New Zealand</option>
+                <option value="NO">Norway</option>
+                <option value="SE">Sweden</option>
+                <option value="DK">Denmark</option>
+                <option value="FI">Finland</option>
+                <option value="IE">Ireland</option>
+                <option value="CH">Switzerland</option>
+                <option value="AT">Austria</option>
+                <option value="BE">Belgium</option>
+                <option value="PT">Portugal</option>
+                <option value="GR">Greece</option>
+                <option value="PL">Poland</option>
+                <option value="CZ">Czech Republic</option>
+                <option value="HU">Hungary</option>
+                <option value="RO">Romania</option>
+                <option value="BG">Bulgaria</option>
+                <option value="HR">Croatia</option>
+                <option value="SI">Slovenia</option>
+                <option value="SK">Slovakia</option>
+                <option value="LT">Lithuania</option>
+                <option value="LV">Latvia</option>
+                <option value="EE">Estonia</option>
+                <option value="RU">Russia</option>
+                <option value="UA">Ukraine</option>
+                <option value="TR">Turkey</option>
+                <option value="IL">Israel</option>
+                <option value="AE">UAE</option>
+                <option value="SA">Saudi Arabia</option>
+              </select>
+              <div class="text-xs text-gray-500 mt-1">
+                This helps provide more accurate location suggestions for your region
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
                 >Temperature Preference</label
               >
               <div class="grid grid-cols-3 gap-2" id="tempPrefs">
@@ -461,51 +526,66 @@
 
           <!-- Location Input Form -->
           <div id="locationInputDiv" class="mb-6">
-            <div class="relative">
-              <svg
-                class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                id="locationInput"
-                placeholder="Enter city name or zip code"
-                autocomplete="off"
-                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                oninput="handleLocationInput(this.value)"
-                onblur="setTimeout(() => hideLocationSuggestions(), 150)"
-                onfocus="showRecentSuggestions()"
-              />
-
-              <!-- Autocomplete Dropdown -->
-              <div
-                id="locationSuggestions"
-                class="hidden absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
-              >
-                <div id="suggestionsList" class="py-1"></div>
-                <div
-                  id="loadingSuggestion"
-                  class="hidden px-4 py-2 text-sm text-gray-500 flex items-center"
+            <div class="flex gap-2">
+              <div class="relative flex-1">
+                <svg
+                  class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <div class="spinner-sm mr-2"></div>
-                  Searching locations...
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                <input
+                  type="text"
+                  id="locationInput"
+                  placeholder="Enter city name or zip code"
+                  autocomplete="off"
+                  class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  oninput="handleLocationInput(this.value)"
+                  onblur="setTimeout(() => hideLocationSuggestions(), 150)"
+                  onfocus="showRecentSuggestions()"
+                />
+
+                <!-- Autocomplete Dropdown -->
+                <div
+                  id="locationSuggestions"
+                  class="hidden absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                >
+                  <div id="suggestionsList" class="py-1"></div>
+                  <div
+                    id="loadingSuggestion"
+                    class="hidden px-4 py-2 text-sm text-gray-500 flex items-center"
+                  >
+                    <div class="spinner-sm mr-2"></div>
+                    Searching locations...
+                  </div>
                 </div>
               </div>
+
+              <!-- Use Current Location Button -->
+              <button
+                onclick="getCurrentLocation()"
+                id="geoLocationBtn"
+                class="px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center min-w-[52px]"
+                title="Use my current location"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
             </div>
 
             <button
@@ -840,6 +920,7 @@
         workEnvironment: "indoor",
         specialConsiderations: [],
         unitPreference: "auto", // auto, imperial, metric
+        countryPreference: "auto", // auto or ISO country code
         hasLearned: false,
       };
       let savedLocation = "";
@@ -854,7 +935,7 @@
       });
 
       function loadUserData() {
-        console.log("📱 loadUserData called");
+        console.log("���� loadUserData called");
         try {
           const profile = localStorage.getItem("weatherWardrobeProfile");
           console.log("📱 Raw profile from localStorage:", profile);
@@ -872,6 +953,12 @@
               userProfile.unitPreference = "auto";
               console.log("📱 Set default unitPreference to 'auto'");
             }
+
+            // Ensure countryPreference has a default value
+            if (!userProfile.countryPreference) {
+              userProfile.countryPreference = "auto";
+              console.log("📱 Set default countryPreference to 'auto'");
+            }
           } else {
             console.log("📱 No profile found in localStorage, using defaults");
           }
@@ -885,7 +972,7 @@
 
           console.log("📱 Final userProfile after load:", userProfile);
         } catch (e) {
-          console.log("📱 Storage not available:", e);
+          console.log("�� Storage not available:", e);
         }
       }
 
@@ -1031,6 +1118,12 @@
           }
         });
 
+        // Update country preference dropdown
+        const countrySelect = document.getElementById("countryPreference");
+        if (countrySelect && userProfile.countryPreference) {
+          countrySelect.value = userProfile.countryPreference;
+        }
+
         // Update special considerations checkboxes
         document.querySelectorAll(".special-checkbox").forEach((checkbox) => {
           const value = checkbox.value;
@@ -1096,6 +1189,19 @@
         } else {
           console.log("🔧 Weather not displayed, skipping refresh");
         }
+      }
+
+      function setCountryPreference(country) {
+        console.log("🌍 setCountryPreference called with:", country);
+        userProfile.countryPreference = country;
+
+        // Update currentUserCountry if not auto
+        if (country !== 'auto') {
+          currentUserCountry = country;
+        }
+
+        updateUI();
+        console.log("🌍 Country preference set to:", userProfile.countryPreference);
       }
 
       function toggleSpecialConsideration(consideration) {
@@ -1830,155 +1936,175 @@
         }, 300);
       }
 
-      // Comprehensive city database for client-side search
-      const cityDatabase = [
-        // Major US Cities
-        { name: "New York", state: "NY", country: "US", lat: 40.7128, lon: -74.0060 },
-        { name: "Los Angeles", state: "CA", country: "US", lat: 34.0522, lon: -118.2437 },
-        { name: "Chicago", state: "IL", country: "US", lat: 41.8781, lon: -87.6298 },
-        { name: "Houston", state: "TX", country: "US", lat: 29.7604, lon: -95.3698 },
-        { name: "Phoenix", state: "AZ", country: "US", lat: 33.4484, lon: -112.0740 },
-        { name: "Philadelphia", state: "PA", country: "US", lat: 39.9526, lon: -75.1652 },
-        { name: "San Antonio", state: "TX", country: "US", lat: 29.4241, lon: -98.4936 },
-        { name: "San Diego", state: "CA", country: "US", lat: 32.7157, lon: -117.1611 },
-        { name: "Dallas", state: "TX", country: "US", lat: 32.7767, lon: -96.7970 },
-        { name: "Austin", state: "TX", country: "US", lat: 30.2672, lon: -97.7431 },
-        { name: "San Jose", state: "CA", country: "US", lat: 37.3382, lon: -121.8863 },
-        { name: "Fort Worth", state: "TX", country: "US", lat: 32.7555, lon: -97.3308 },
-        { name: "Jacksonville", state: "FL", country: "US", lat: 30.3322, lon: -81.6557 },
-        { name: "Columbus", state: "OH", country: "US", lat: 39.9612, lon: -82.9988 },
-        { name: "Charlotte", state: "NC", country: "US", lat: 35.2271, lon: -80.8431 },
-        { name: "San Francisco", state: "CA", country: "US", lat: 37.7749, lon: -122.4194 },
-        { name: "Indianapolis", state: "IN", country: "US", lat: 39.7684, lon: -86.1581 },
-        { name: "Seattle", state: "WA", country: "US", lat: 47.6062, lon: -122.3321 },
-        { name: "Denver", state: "CO", country: "US", lat: 39.7392, lon: -104.9903 },
-        { name: "Boston", state: "MA", country: "US", lat: 42.3601, lon: -71.0589 },
-        { name: "Detroit", state: "MI", country: "US", lat: 42.3314, lon: -83.0458 },
-        { name: "Nashville", state: "TN", country: "US", lat: 36.1627, lon: -86.7816 },
-        { name: "Memphis", state: "TN", country: "US", lat: 35.1495, lon: -90.0490 },
-        { name: "Portland", state: "OR", country: "US", lat: 45.5152, lon: -122.6784 },
-        { name: "Las Vegas", state: "NV", country: "US", lat: 36.1699, lon: -115.1398 },
-        { name: "Louisville", state: "KY", country: "US", lat: 38.2527, lon: -85.7585 },
-        { name: "Baltimore", state: "MD", country: "US", lat: 39.2904, lon: -76.6122 },
-        { name: "Milwaukee", state: "WI", country: "US", lat: 43.0389, lon: -87.9065 },
-        { name: "Albuquerque", state: "NM", country: "US", lat: 35.0844, lon: -106.6504 },
-        { name: "Tucson", state: "AZ", country: "US", lat: 32.2226, lon: -110.9747 },
-        { name: "Fresno", state: "CA", country: "US", lat: 36.7378, lon: -119.7871 },
-        { name: "Sacramento", state: "CA", country: "US", lat: 38.5816, lon: -121.4944 },
-        { name: "Mesa", state: "AZ", country: "US", lat: 33.4152, lon: -111.8315 },
-        { name: "Kansas City", state: "MO", country: "US", lat: 39.0997, lon: -94.5786 },
-        { name: "Atlanta", state: "GA", country: "US", lat: 33.7490, lon: -84.3880 },
-        { name: "Colorado Springs", state: "CO", country: "US", lat: 38.8339, lon: -104.8214 },
-        { name: "Omaha", state: "NE", country: "US", lat: 41.2565, lon: -95.9345 },
-        { name: "Raleigh", state: "NC", country: "US", lat: 35.7796, lon: -78.6382 },
-        { name: "Miami", state: "FL", country: "US", lat: 25.7617, lon: -80.1918 },
-        { name: "Cleveland", state: "OH", country: "US", lat: 41.4993, lon: -81.6944 },
-        { name: "Virginia Beach", state: "VA", country: "US", lat: 36.8529, lon: -75.9780 },
-        { name: "Oakland", state: "CA", country: "US", lat: 37.8044, lon: -122.2711 },
-        { name: "Minneapolis", state: "MN", country: "US", lat: 44.9778, lon: -93.2650 },
-        { name: "Tampa", state: "FL", country: "US", lat: 27.9506, lon: -82.4572 },
-        { name: "Arlington", state: "TX", country: "US", lat: 32.7357, lon: -97.1081 },
-        { name: "New Orleans", state: "LA", country: "US", lat: 29.9511, lon: -90.0715 },
-        { name: "Wichita", state: "KS", country: "US", lat: 37.6872, lon: -97.3301 },
+      // Global variables for location management
+      let currentUserCountry = null;
+      let isGettingLocation = false;
 
-        // New Jersey Cities
-        { name: "Newark", state: "NJ", country: "US", lat: 40.7357, lon: -74.1724 },
-        { name: "Jersey City", state: "NJ", country: "US", lat: 40.7178, lon: -74.0431 },
-        { name: "Paterson", state: "NJ", country: "US", lat: 40.9168, lon: -74.1718 },
-        { name: "Elizabeth", state: "NJ", country: "US", lat: 40.6640, lon: -74.2107 },
-        { name: "Edison", state: "NJ", country: "US", lat: 40.5187, lon: -74.4121 },
-        { name: "Woodbridge", state: "NJ", country: "US", lat: 40.5576, lon: -74.2846 },
-        { name: "Lakewood", state: "NJ", country: "US", lat: 40.0979, lon: -74.2179 },
-        { name: "Toms River", state: "NJ", country: "US", lat: 39.9537, lon: -74.1979 },
-        { name: "Hamilton", state: "NJ", country: "US", lat: 40.2298, lon: -74.6565 },
-        { name: "Trenton", state: "NJ", country: "US", lat: 40.2206, lon: -74.7564 },
-        { name: "Camden", state: "NJ", country: "US", lat: 39.9259, lon: -75.1196 },
-        { name: "Clifton", state: "NJ", country: "US", lat: 40.8584, lon: -74.1638 },
-        { name: "Brick", state: "NJ", country: "US", lat: 40.0737, lon: -74.1257 },
-        { name: "Cherry Hill", state: "NJ", country: "US", lat: 39.9348, lon: -75.0307 },
-        { name: "Passaic", state: "NJ", country: "US", lat: 40.8568, lon: -74.1284 },
-        { name: "Union City", state: "NJ", country: "US", lat: 40.7662, lon: -74.0376 },
-        { name: "Vineland", state: "NJ", country: "US", lat: 39.4864, lon: -75.0260 },
-        { name: "New Brunswick", state: "NJ", country: "US", lat: 40.4862, lon: -74.4518 },
-        { name: "Wayne", state: "NJ", country: "US", lat: 40.9251, lon: -74.2763 },
-        { name: "Irvington", state: "NJ", country: "US", lat: 40.7218, lon: -74.2321 },
-        { name: "Riverside", state: "NJ", country: "US", lat: 40.0368, lon: -74.9632 },
+      // Geolocation functions
+      async function getCurrentLocation() {
+        if (isGettingLocation) return;
 
-        // Florida Cities
-        { name: "Orlando", state: "FL", country: "US", lat: 28.5383, lon: -81.3792 },
-        { name: "St. Petersburg", state: "FL", country: "US", lat: 27.7676, lon: -82.6403 },
-        { name: "Hialeah", state: "FL", country: "US", lat: 25.8576, lon: -80.2781 },
-        { name: "Tallahassee", state: "FL", country: "US", lat: 30.4518, lon: -84.2807 },
-        { name: "Fort Lauderdale", state: "FL", country: "US", lat: 26.1224, lon: -80.1373 },
-        { name: "Gainesville", state: "FL", country: "US", lat: 29.6516, lon: -82.3248 },
-        { name: "Clearwater", state: "FL", country: "US", lat: 27.9659, lon: -82.8001 },
-        { name: "West Palm Beach", state: "FL", country: "US", lat: 26.7153, lon: -80.0534 },
-        { name: "Daytona Beach", state: "FL", country: "US", lat: 29.2108, lon: -81.0228 },
+        const geoBtn = document.getElementById('geoLocationBtn');
+        const errorDiv = document.getElementById('errorDiv');
+        const errorText = document.getElementById('errorText');
 
-        // Common "Da" searches
-        { name: "Dayton", state: "OH", country: "US", lat: 39.7589, lon: -84.1916 },
-        { name: "Danbury", state: "CT", country: "US", lat: 41.3948, lon: -73.4540 },
-        { name: "Danville", state: "VA", country: "US", lat: 36.5860, lon: -79.3950 },
-        { name: "Daly City", state: "CA", country: "US", lat: 37.7058, lon: -122.4619 },
+        isGettingLocation = true;
+        geoBtn.disabled = true;
+        geoBtn.innerHTML = '<div class="spinner-sm"></div>';
 
-        // International Cities
-        { name: "Toronto", state: "ON", country: "CA", lat: 43.6532, lon: -79.3832 },
-        { name: "Vancouver", state: "BC", country: "CA", lat: 49.2827, lon: -123.1207 },
-        { name: "Montreal", state: "QC", country: "CA", lat: 45.5017, lon: -73.5673 },
-        { name: "London", state: "", country: "GB", lat: 51.5074, lon: -0.1278 },
-        { name: "Paris", state: "", country: "FR", lat: 48.8566, lon: 2.3522 },
-        { name: "Berlin", state: "", country: "DE", lat: 52.5200, lon: 13.4050 },
-        { name: "Tokyo", state: "", country: "JP", lat: 35.6762, lon: 139.6503 },
-        { name: "Sydney", state: "NSW", country: "AU", lat: -33.8688, lon: 151.2093 },
-        { name: "Melbourne", state: "VIC", country: "AU", lat: -37.8136, lon: 144.9631 },
-      ];
+        // Hide any previous errors
+        errorDiv.classList.add('hidden');
 
-      function searchLocations(query) {
+        if (!navigator.geolocation) {
+          showGeolocationError('Geolocation is not supported by this browser.');
+          return;
+        }
+
+        console.log('🌍 Requesting current location...');
+
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const { latitude, longitude } = position.coords;
+              console.log(`📍 Got coordinates: ${latitude}, ${longitude}`);
+
+              // Use reverse geocoding to get location name
+              await reverseGeocode(latitude, longitude);
+
+            } catch (error) {
+              console.error('Error processing location:', error);
+              showGeolocationError('Failed to process your location. Please try manual entry.');
+            }
+          },
+          (error) => {
+            console.error('Geolocation error:', error);
+            let errorMessage = 'Unable to get your location. ';
+
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage += 'Location access was denied. Please enable location services and refresh.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage += 'Location information is unavailable.';
+                break;
+              case error.TIMEOUT:
+                errorMessage += 'Location request timed out.';
+                break;
+              default:
+                errorMessage += 'An unknown error occurred.';
+                break;
+            }
+
+            showGeolocationError(errorMessage);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+          }
+        );
+      }
+
+      async function reverseGeocode(lat, lon) {
+        try {
+          // For now, use coordinates directly since we don't have reverse geocoding API endpoint
+          // This still allows getting weather data for current location
+          selectedLocation = {
+            lat: lat,
+            lon: lon,
+            name: 'Current Location',
+            country: 'Unknown'
+          };
+
+          // Set a user-friendly display name
+          const displayName = `Current Location (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+          document.getElementById('locationInput').value = displayName;
+
+          // Add to recent locations
+          addToRecentLocations(selectedLocation, displayName);
+
+          console.log(`📍 Current location set: ${displayName}`);
+
+          // Automatically get weather for current location
+          setTimeout(() => {
+            getWeather();
+          }, 500);
+
+        } catch (error) {
+          console.error('Error setting current location:', error);
+          showGeolocationError('Failed to set your current location. Please try manual entry.');
+        } finally {
+          resetGeolocationButton();
+        }
+      }
+
+      function showGeolocationError(message) {
+        const errorDiv = document.getElementById('errorDiv');
+        const errorText = document.getElementById('errorText');
+
+        errorText.textContent = message;
+        errorDiv.classList.remove('hidden');
+
+        resetGeolocationButton();
+      }
+
+      function resetGeolocationButton() {
+        const geoBtn = document.getElementById('geoLocationBtn');
+        isGettingLocation = false;
+        geoBtn.disabled = false;
+        geoBtn.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        `;
+      }
+
+      async function searchLocations(query) {
         const suggestionsList = document.getElementById("suggestionsList");
         const loadingDiv = document.getElementById("loadingSuggestion");
         const suggestionsContainer = document.getElementById(
           "locationSuggestions",
         );
 
+        if (query.trim().length < 2) {
+          suggestionsContainer.classList.add("hidden");
+          return;
+        }
+
         // Show loading state
         suggestionsList.innerHTML = "";
         loadingDiv.classList.remove("hidden");
         suggestionsContainer.classList.remove("hidden");
 
-        console.log("🔍 Client-side search for:", query);
+        console.log("🔍 OpenWeather API search for:", query);
 
-        // Simulate brief loading for better UX
-        setTimeout(() => {
-          const queryLower = query.toLowerCase().trim();
-          const matchingCities = cityDatabase
-            .filter(city => {
-              const cityName = city.name.toLowerCase();
-              const stateName = city.state ? city.state.toLowerCase() : '';
-              return cityName.startsWith(queryLower) ||
-                     cityName.includes(queryLower) ||
-                     stateName.includes(queryLower);
-            })
-            .sort((a, b) => {
-              // Prioritize exact starts
-              const aStarts = a.name.toLowerCase().startsWith(queryLower);
-              const bStarts = b.name.toLowerCase().startsWith(queryLower);
-              if (aStarts && !bStarts) return -1;
-              if (!aStarts && bStarts) return 1;
-              return a.name.localeCompare(b.name);
-            })
-            .slice(0, 8);
+        try {
+          // Use OpenWeather Geocoding API
+          const response = await fetch(`/api/geocoding?q=${encodeURIComponent(query)}&limit=8`);
 
-          console.log(`🔍 Found ${matchingCities.length} cities for "${query}"`);
+          if (response.ok) {
+            const locations = await response.json();
+            console.log(`🔍 Found ${locations.length} locations for "${query}"`);
 
-          if (matchingCities.length > 0) {
-            displayLocationSuggestions(matchingCities);
+            if (locations.length > 0) {
+              displayLocationSuggestions(locations);
+            } else {
+              suggestionsList.innerHTML =
+                '<div class="px-4 py-2 text-sm text-gray-500">No locations found - try different spelling or zip codes</div>';
+            }
           } else {
+            console.error('Geocoding API error:', response.status);
             suggestionsList.innerHTML =
-              '<div class="px-4 py-2 text-sm text-gray-500">No cities found - try zip codes or different spelling</div>';
+              '<div class="px-4 py-2 text-sm text-gray-500">Search temporarily unavailable - try zip codes</div>';
           }
+        } catch (error) {
+          console.error('Search error:', error);
+          suggestionsList.innerHTML =
+            '<div class="px-4 py-2 text-sm text-gray-500">Search error - try zip codes</div>';
+        }
 
-          loadingDiv.classList.add("hidden");
-        }, 100);
+        loadingDiv.classList.add("hidden");
       }
 
       function displayLocationSuggestions(locations) {
@@ -2011,440 +2137,7 @@
         suggestionsContainer.classList.remove("hidden");
       }
 
-      // Demo suggestions function removed - using OpenWeather Geocoding API exclusively
-      function displayDemoSuggestions(query) {
-        // This function is deprecated - OpenWeather API should be used instead
-        const demoSuggestions = [
-          {
-            name: "New York",
-            state: "NY",
-            country: "US",
-            lat: 40.7128,
-            lon: -74.006,
-          },
-          {
-            name: "Los Angeles",
-            state: "CA",
-            country: "US",
-            lat: 34.0522,
-            lon: -118.2437,
-          },
-          {
-            name: "Chicago",
-            state: "IL",
-            country: "US",
-            lat: 41.8781,
-            lon: -87.6298,
-          },
-          {
-            name: "Houston",
-            state: "TX",
-            country: "US",
-            lat: 29.7604,
-            lon: -95.3698,
-          },
-          {
-            name: "Phoenix",
-            state: "AZ",
-            country: "US",
-            lat: 33.4484,
-            lon: -112.074,
-          },
-          {
-            name: "Philadelphia",
-            state: "PA",
-            country: "US",
-            lat: 39.9526,
-            lon: -75.1652,
-          },
-          {
-            name: "San Antonio",
-            state: "TX",
-            country: "US",
-            lat: 29.4241,
-            lon: -98.4936,
-          },
-          {
-            name: "San Diego",
-            state: "CA",
-            country: "US",
-            lat: 32.7157,
-            lon: -117.1611,
-          },
-          {
-            name: "Dallas",
-            state: "TX",
-            country: "US",
-            lat: 32.7767,
-            lon: -96.797,
-          },
-          {
-            name: "San Jose",
-            state: "CA",
-            country: "US",
-            lat: 37.3382,
-            lon: -121.8863,
-          },
-          {
-            name: "Austin",
-            state: "TX",
-            country: "US",
-            lat: 30.2672,
-            lon: -97.7431,
-          },
-          {
-            name: "Jacksonville",
-            state: "FL",
-            country: "US",
-            lat: 30.3322,
-            lon: -81.6557,
-          },
-          {
-            name: "Fort Worth",
-            state: "TX",
-            country: "US",
-            lat: 32.7555,
-            lon: -97.3308,
-          },
-          {
-            name: "Columbus",
-            state: "OH",
-            country: "US",
-            lat: 39.9612,
-            lon: -82.9988,
-          },
-          {
-            name: "Charlotte",
-            state: "NC",
-            country: "US",
-            lat: 35.2271,
-            lon: -80.8431,
-          },
-          {
-            name: "San Francisco",
-            state: "CA",
-            country: "US",
-            lat: 37.7749,
-            lon: -122.4194,
-          },
-          {
-            name: "Indianapolis",
-            state: "IN",
-            country: "US",
-            lat: 39.7684,
-            lon: -86.1581,
-          },
-          {
-            name: "Seattle",
-            state: "WA",
-            country: "US",
-            lat: 47.6062,
-            lon: -122.3321,
-          },
-          {
-            name: "Denver",
-            state: "CO",
-            country: "US",
-            lat: 39.7392,
-            lon: -104.9903,
-          },
-          {
-            name: "Boston",
-            state: "MA",
-            country: "US",
-            lat: 42.3601,
-            lon: -71.0589,
-          },
-          {
-            name: "El Paso",
-            state: "TX",
-            country: "US",
-            lat: 31.7619,
-            lon: -106.485,
-          },
-          {
-            name: "Detroit",
-            state: "MI",
-            country: "US",
-            lat: 42.3314,
-            lon: -83.0458,
-          },
-          {
-            name: "Nashville",
-            state: "TN",
-            country: "US",
-            lat: 36.1627,
-            lon: -86.7816,
-          },
-          {
-            name: "Portland",
-            state: "OR",
-            country: "US",
-            lat: 45.5152,
-            lon: -122.6784,
-          },
-          {
-            name: "Las Vegas",
-            state: "NV",
-            country: "US",
-            lat: 36.1699,
-            lon: -115.1398,
-          },
-          {
-            name: "Oklahoma City",
-            state: "OK",
-            country: "US",
-            lat: 35.4676,
-            lon: -97.5164,
-          },
-          {
-            name: "Memphis",
-            state: "TN",
-            country: "US",
-            lat: 35.1495,
-            lon: -90.049,
-          },
-          {
-            name: "Louisville",
-            state: "KY",
-            country: "US",
-            lat: 38.2527,
-            lon: -85.7585,
-          },
-          {
-            name: "Baltimore",
-            state: "MD",
-            country: "US",
-            lat: 39.2904,
-            lon: -76.6122,
-          },
-          {
-            name: "Milwaukee",
-            state: "WI",
-            country: "US",
-            lat: 43.0389,
-            lon: -87.9065,
-          },
-          {
-            name: "Albuquerque",
-            state: "NM",
-            country: "US",
-            lat: 35.0844,
-            lon: -106.6504,
-          },
-          {
-            name: "Tucson",
-            state: "AZ",
-            country: "US",
-            lat: 32.2226,
-            lon: -110.9747,
-          },
-          {
-            name: "Fresno",
-            state: "CA",
-            country: "US",
-            lat: 36.7378,
-            lon: -119.7871,
-          },
-          {
-            name: "Sacramento",
-            state: "CA",
-            country: "US",
-            lat: 38.5816,
-            lon: -121.4944,
-          },
-          {
-            name: "Kansas City",
-            state: "MO",
-            country: "US",
-            lat: 39.0997,
-            lon: -94.5786,
-          },
-          {
-            name: "Mesa",
-            state: "AZ",
-            country: "US",
-            lat: 33.4152,
-            lon: -111.8315,
-          },
-          {
-            name: "Atlanta",
-            state: "GA",
-            country: "US",
-            lat: 33.749,
-            lon: -84.388,
-          },
-          {
-            name: "Colorado Springs",
-            state: "CO",
-            country: "US",
-            lat: 38.8339,
-            lon: -104.8214,
-          },
-          {
-            name: "Omaha",
-            state: "NE",
-            country: "US",
-            lat: 41.2565,
-            lon: -95.9345,
-          },
-          {
-            name: "Raleigh",
-            state: "NC",
-            country: "US",
-            lat: 35.7796,
-            lon: -78.6382,
-          },
-          {
-            name: "Miami",
-            state: "FL",
-            country: "US",
-            lat: 25.7617,
-            lon: -80.1918,
-          },
-          {
-            name: "Virginia Beach",
-            state: "VA",
-            country: "US",
-            lat: 36.8529,
-            lon: -75.978,
-          },
-          {
-            name: "Oakland",
-            state: "CA",
-            country: "US",
-            lat: 37.8044,
-            lon: -122.2711,
-          },
-          {
-            name: "Minneapolis",
-            state: "MN",
-            country: "US",
-            lat: 44.9778,
-            lon: -93.265,
-          },
-          {
-            name: "Tulsa",
-            state: "OK",
-            country: "US",
-            lat: 36.154,
-            lon: -95.9928,
-          },
-          {
-            name: "Arlington",
-            state: "TX",
-            country: "US",
-            lat: 32.7357,
-            lon: -97.1081,
-          },
-          {
-            name: "New Orleans",
-            state: "LA",
-            country: "US",
-            lat: 29.9511,
-            lon: -90.0715,
-          },
-          {
-            name: "Wichita",
-            state: "KS",
-            country: "US",
-            lat: 37.6872,
-            lon: -97.3301,
-          },
-          {
-            name: "Cleveland",
-            state: "OH",
-            country: "US",
-            lat: 41.4993,
-            lon: -81.6944,
-          },
-          {
-            name: "Tampa",
-            state: "FL",
-            country: "US",
-            lat: 27.9506,
-            lon: -82.4572,
-          },
-          {
-            name: "Riverside",
-            state: "CA",
-            country: "US",
-            lat: 33.9533,
-            lon: -117.3962,
-          },
-          {
-            name: "Riverside",
-            state: "NJ",
-            country: "US",
-            lat: 40.0368,
-            lon: -74.9632,
-          },
-          {
-            name: "Daytona Beach",
-            state: "FL",
-            country: "US",
-            lat: 29.2108,
-            lon: -81.0228,
-          },
-          {
-            name: "Dayton",
-            state: "OH",
-            country: "US",
-            lat: 39.7589,
-            lon: -84.1916,
-          },
-          {
-            name: "Danbury",
-            state: "CT",
-            country: "US",
-            lat: 41.3948,
-            lon: -73.454,
-          },
-          {
-            name: "Danville",
-            state: "VA",
-            country: "US",
-            lat: 36.586,
-            lon: -79.395,
-          },
-          {
-            name: "Daly City",
-            state: "CA",
-            country: "US",
-            lat: 37.7058,
-            lon: -122.4619,
-          },
-        ];
-
-        // Filter for any partial match in city name
-        const filtered = demoSuggestions
-          .filter((city) => {
-            const cityName = city.name.toLowerCase();
-            const queryLower = query.toLowerCase();
-            return (
-              cityName.startsWith(queryLower) || cityName.includes(queryLower)
-            );
-          })
-          .sort((a, b) => {
-            // Prioritize cities that start with the query
-            const aStarts = a.name
-              .toLowerCase()
-              .startsWith(query.toLowerCase());
-            const bStarts = b.name
-              .toLowerCase()
-              .startsWith(query.toLowerCase());
-            if (aStarts && !bStarts) return -1;
-            if (!aStarts && bStarts) return 1;
-            return a.name.localeCompare(b.name);
-          })
-          .slice(0, 10); // Show more results
-
-        console.log(
-          `Demo suggestions for "${query}":`,
-          filtered.map((c) => c.name),
-        );
-        displayLocationSuggestions(filtered);
-      }
+      // Deprecated function removed - now using OpenWeather Geocoding API exclusively
 
       function formatLocationName(location) {
         if (location.state) {

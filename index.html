@@ -1981,6 +1981,11 @@
 
         console.log(`🌍 Searching for weather: ${cityName} in ${countryCode}`);
 
+        // Handle US zip codes
+        if (/^\d{5}(-\d{4})?$/.test(cityName) && countryCode === 'US') {
+        console.log("📮 Detected zip code - using special handling");
+        // Continue with normal flow but the API will handle it
+
         // Show loading state
         const button = document.getElementById("getWeatherBtn");
         const btnText = document.getElementById("getWeatherBtnText");
@@ -2004,7 +2009,21 @@
           console.log(`🎛️ Using units: ${currentUnits} for country: ${countryCode}`);
 
           // Try to find weather data for the location
-          const weatherResult = await findNearestCityWithWeather(cityName, countryCode);
+          let weatherResult;
+          if (/^\d{5}(-\d{4})?$/.test(cityName) && countryCode === 'US') {
+            // For zip codes, use direct weather API call
+            const weatherUrl = `${WEATHER_API_BASE}/weather?zip=${cityName},US&units=${currentUnits}&appid=${API_KEY}`;
+            const response = await fetch(weatherUrl);
+            if (response.ok) {
+              const data = await response.json();
+              weatherResult = { city: data.name, data: data, isExact: true };
+            } else {
+              throw new Error("Invalid zip code");
+            }
+          } else {
+            // For city names, use the normal search
+            weatherResult = await findNearestCityWithWeather(cityName, countryCode);
+          }
 
           if (weatherResult) {
             // Get forecast data

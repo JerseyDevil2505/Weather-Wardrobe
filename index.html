@@ -2374,37 +2374,72 @@
         }
       }
       function getClothingRecommendation(temp, condition, forecast) {
+        const currentHour = new Date().getHours();
         const lowerCondition = condition.toLowerCase();
         let baseTemp = temp;
+        
+        // Determine which temperature to use for recommendations
+        let useTemp = temp;
+        let timePeriod = "now";
+        
+        // If we have forecast data and it's late/early, use forecast temps
+        if (forecast && (currentHour >= 20 || currentHour < 6)) {
+          // Evening/night: prepare for tomorrow
+          useTemp = forecast.high;
+          timePeriod = "tomorrow";
+          
+          // Also consider the low for layering advice
+          const tempRange = forecast.high - forecast.low;
+          if (tempRange > 20) {
+            // Big temperature swing - recommend layers
+            timePeriod = `tomorrow (${formatTemperature(forecast.low)} to ${formatTemperature(forecast.high)})`;
+          }
+        } else if (forecast && currentHour < 12) {
+          // Morning: consider the day's high
+          if (forecast.high - temp > 15) {
+            useTemp = forecast.high;
+            timePeriod = `later today (high of ${formatTemperature(forecast.high)})`;
+          }
+        }
 
         // Adjust temperature based on user preferences
         if (userProfile.temperaturePreference === "runs-hot") {
-          baseTemp += 10;
+          baseTemp = useTemp + 10;
         } else if (userProfile.temperaturePreference === "runs-cold") {
-          baseTemp -= 10;
+          baseTemp = useTemp - 10;
+        } else {
+          baseTemp = useTemp;
         }
 
         // Adjust for activity level
         if (userProfile.activityLevel === "active") {
-          baseTemp += 5; // Active people get warmer
+          baseTemp += 5;
         } else if (userProfile.activityLevel === "sedentary") {
-          baseTemp -= 3; // Sedentary people might feel cooler
+          baseTemp -= 3;
         }
 
-        // Get detailed recommendations by category
+        // Get detailed recommendations
         const recommendations = getDetailedClothingRecommendations(
           baseTemp,
           lowerCondition,
           forecast,
         );
+        
+        // Add time-based context to alerts
+        if (timePeriod !== "now") {
+          recommendations.alerts.unshift(`📅 Recommendations for ${timePeriod}`);
+        }
+        
+        // If big temperature range, add layering advice
+        if (forecast && (forecast.high - forecast.low) > 20) {
+          recommendations.alerts.push("Large temperature range - dress in removable layers!");
+        }
 
-        // Update each category in the UI
+        // Update UI elements
         const topEl = document.getElementById("topRecommendation");
         const bottomEl = document.getElementById("bottomRecommendation");
         const footwearEl = document.getElementById("footwearRecommendation");
-        const accessoriesEl = document.getElementById(
-          "accessoriesRecommendation",
-        );
+        const accessoriesEl = document.getElementById("accessoriesRecommendation");
         const alertDiv = document.getElementById("weatherAlerts");
         const alertText = document.getElementById("weatherAlertText");
 
@@ -2420,8 +2455,7 @@
         if (topEl) topEl.textContent = recommendations.top;
         if (bottomEl) bottomEl.textContent = recommendations.bottom;
         if (footwearEl) footwearEl.textContent = recommendations.footwear;
-        if (accessoriesEl)
-          accessoriesEl.textContent = recommendations.accessories;
+        if (accessoriesEl) accessoriesEl.textContent = recommendations.accessories;
 
         // Handle weather alerts
         if (recommendations.alerts && recommendations.alerts.length > 0) {
@@ -2668,7 +2702,12 @@
             "Working outdoors - choose weather-resistant materials",
           );
         }
-
+        // Indoor venue advice for hot days
+        if (tempForClothing >= 75) {
+          recommendations.alerts.push(
+            "Going indoors? Bring a light layer - theaters & restaurants blast AC!"
+          );
+        }
         return recommendations;
       }
 

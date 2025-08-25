@@ -1166,7 +1166,7 @@
 
       function setUnitPref(unit) {
         console.log("🔧 setUnitPref called with:", unit);
-        console.log("🔧 Before change - userProfile.unitPreference:", userProfile.unitPreference);
+        console.log("�� Before change - userProfile.unitPreference:", userProfile.unitPreference);
         console.log("🔧 Before change - currentUnits:", currentUnits);
 
         userProfile.unitPreference = unit;
@@ -1952,23 +1952,41 @@
         clearTimeout(searchTimeout);
         const trimmedValue = value.trim();
 
+        console.log("🎯 Location input:", value, "trimmed:", trimmedValue);
+
         if (trimmedValue.length === 0) {
           hideLocationSuggestions();
           return;
         }
 
-        // If it looks like a zip code, don't search for suggestions
-        if (/^\d{1,5}$/.test(trimmedValue)) {
-          hideLocationSuggestions();
+        // If it looks like a complete zip code, don't search for suggestions but show it as an option
+        if (/^\d{5}(-\d{4})?$/.test(trimmedValue)) {
+          console.log("📮 Detected complete zip code:", trimmedValue);
+          showZipCodeSuggestion(trimmedValue);
           return;
         }
 
         // Debounce search requests
         searchTimeout = setTimeout(() => {
           if (trimmedValue.length >= 2) {
+            console.log("🔍 Starting search for:", trimmedValue);
             searchLocations(trimmedValue);
           }
         }, 300);
+      }
+
+      // Show zip code as a suggestion
+      function showZipCodeSuggestion(zipCode) {
+        const suggestionsList = document.getElementById("suggestionsList");
+        const suggestionsContainer = document.getElementById("locationSuggestions");
+
+        const zipLocation = {
+          name: zipCode,
+          country: 'US',
+          isZipCode: true
+        };
+
+        displayLocationSuggestions([zipLocation]);
       }
 
       // Global variables for location management
@@ -2042,9 +2060,9 @@
 
       async function reverseGeocode(lat, lon) {
         try {
-          // Try to get weather directly using coordinates first
           console.log(`📍 Getting weather for coordinates: ${lat}, ${lon}`);
 
+          // Set coordinates immediately so weather lookup can use them
           selectedLocation = {
             lat: lat,
             lon: lon,
@@ -2052,98 +2070,161 @@
             country: 'Unknown'
           };
 
-          // Test the weather API with coordinates first
-          const testUrl = `/api/weather?lat=${lat}&lon=${lon}&type=current&units=imperial`;
-          console.log("🧪 Testing weather API with coordinates:", testUrl);
+          // Try to get weather data using coordinates - this will also give us the city name
+          console.log("🧪 Getting weather data for current location...");
 
-          const testResponse = await fetch(testUrl);
-          const testData = await testResponse.json();
+          const weatherUrl = `/api/weather?lat=${lat}&lon=${lon}&type=current&units=imperial`;
+          const weatherResponse = await fetch(weatherUrl);
+          const weatherData = await weatherResponse.json();
 
-          if (testResponse.ok && testData.name) {
-            // Success! Use the city name from the weather API
-            const cityName = testData.name;
-            const country = testData.sys?.country || 'Unknown';
-            const state = testData.sys?.state;
+          if (weatherResponse.ok && weatherData.name) {
+            // Success! Extract location info from weather response
+            const cityName = weatherData.name;
+            const country = weatherData.sys?.country || 'Unknown';
+            const state = weatherData.sys?.state;
 
-            // Update selectedLocation with the real city info
+            // Update selectedLocation with real city info
             selectedLocation = {
               lat: lat,
               lon: lon,
               name: cityName,
               country: country,
-              state: state
+              state: state,
+              verified: true
             };
 
-            // Create a proper display name
+            // Create display name
             let displayName = cityName;
             if (state) displayName += `, ${state}`;
-            if (country) displayName += `, ${country}`;
+            if (country && country !== 'Unknown') displayName += `, ${country}`;
 
             document.getElementById('locationInput').value = displayName;
             addToRecentLocations(selectedLocation, displayName);
 
-            console.log(`✅ Current location resolved to: ${displayName}`);
+            console.log(`✅ Current location: ${displayName}`);
 
-            // Automatically get weather for current location
+            // Automatically get weather (data is already loaded, but this will trigger UI update)
             setTimeout(() => {
-              getWeather();
-            }, 500);
+              // Use the weather data we already have
+              const forecastUrl = `/api/weather?lat=${lat}&lon=${lon}&type=forecast&units=imperial`;
+              fetch(forecastUrl)
+                .then(response => response.json())
+                .then(forecastData => {
+                  // Process and display weather with existing data
+                  displayWeatherFromCurrentLocation(weatherData, forecastData);
+                })
+                .catch(() => {
+                  // If forecast fails, just display current weather
+                  displayWeatherFromCurrentLocation(weatherData, null);
+                });
+            }, 300);
 
           } else {
-            // Weather API failed with coordinates, try fallback to nearest major city
-            console.warn("⚠️ Weather API failed for coordinates, trying fallback...");
+            // Weather API failed for coordinates - try coordinate-based fallback
+            console.warn("⚠️ Weather API failed for exact coordinates, trying nearby city...");
 
-            // Simple fallback based on coordinate ranges (US East Coast area)
-            let fallbackCity = "New York, NY"; // Default fallback
+            // Use a more precise fallback based on coordinates
+            let fallbackCity = determineFallbackCity(lat, lon);
+            console.log(`🔄 Trying fallback: ${fallbackCity}`);
 
-            // New Jersey/NYC area
-            if (lat >= 39.5 && lat <= 41.5 && lon >= -75.5 && lon <= -73.5) {
-              fallbackCity = "Newark, NJ";
-            }
-            // Philadelphia area
-            else if (lat >= 39.0 && lat <= 40.5 && lon >= -76.0 && lon <= -74.5) {
-              fallbackCity = "Philadelphia, PA";
-            }
+            selectedLocation = {
+              lat: lat,
+              lon: lon,
+              name: fallbackCity.split(',')[0],
+              country: 'US',
+              isApproximate: true
+            };
 
-            console.log(`🔄 Trying fallback city: ${fallbackCity}`);
+            document.getElementById('locationInput').value = `${fallbackCity} (near your location)`;
+            addToRecentLocations(selectedLocation, `${fallbackCity} (near your location)`);
 
-            // Try the fallback city
-            const fallbackUrl = `/api/weather?location=${encodeURIComponent(fallbackCity)}&type=current&units=imperial`;
-            const fallbackResponse = await fetch(fallbackUrl);
+            console.log(`✅ Using approximate location: ${fallbackCity}`);
 
-            if (fallbackResponse.ok) {
-              const fallbackData = await fallbackResponse.json();
-
-              selectedLocation = {
-                lat: lat,
-                lon: lon,
-                name: fallbackData.name,
-                country: fallbackData.sys?.country,
-                state: fallbackData.sys?.state
-              };
-
-              let displayName = `${fallbackData.name} (near your location)`;
-              if (fallbackData.sys?.state) displayName = `${fallbackData.name}, ${fallbackData.sys.state} (near your location)`;
-
-              document.getElementById('locationInput').value = displayName;
-              addToRecentLocations(selectedLocation, displayName);
-
-              console.log(`✅ Using fallback location: ${displayName}`);
-
-              setTimeout(() => {
-                getWeather();
-              }, 500);
-
-            } else {
-              throw new Error(`Weather lookup failed for both coordinates and fallback city: ${testData.error || 'Unknown error'}`);
-            }
+            // Get weather for the fallback city
+            setTimeout(() => {
+              getWeather();
+            }, 300);
           }
 
         } catch (error) {
           console.error('❌ Error with current location:', error);
-          showGeolocationError(`Unable to get weather for your current location. ${error.message || 'Please try entering a city name manually.'}`);
+          showGeolocationError(`Unable to get weather for your current location (${lat.toFixed(4)}, ${lon.toFixed(4)}). Please try entering a city name manually.`);
         } finally {
           resetGeolocationButton();
+        }
+      }
+
+      // Helper function to determine fallback city based on coordinates
+      function determineFallbackCity(lat, lon) {
+        // More precise regional fallbacks
+        if (lat >= 40.5 && lat <= 41.0 && lon >= -74.5 && lon <= -73.8) {
+          return "New York, NY"; // NYC area
+        } else if (lat >= 39.8 && lat <= 40.5 && lon >= -75.0 && lon <= -74.2) {
+          return "Newark, NJ"; // North Jersey
+        } else if (lat >= 39.0 && lat <= 40.0 && lon >= -75.5 && lon <= -74.5) {
+          return "Philadelphia, PA"; // Philly area
+        } else if (lat >= 39.0 && lat <= 40.0 && lon >= -76.0 && lon <= -75.0) {
+          return "Camden, NJ"; // South Jersey
+        } else if (lat >= 40.0 && lat <= 41.0 && lon >= -75.0 && lon <= -74.0) {
+          return "Trenton, NJ"; // Central Jersey
+        } else {
+          // Default fallbacks by region
+          if (lat >= 25 && lat <= 50 && lon >= -125 && lon <= -65) {
+            return "New York, NY"; // Continental US default
+          } else {
+            return "London, UK"; // International default
+          }
+        }
+      }
+
+      // Helper function to display weather when we already have the data from geolocation
+      function displayWeatherFromCurrentLocation(currentData, forecastData) {
+        try {
+          // Process forecast data
+          let todaysForecast = null;
+          if (forecastData && forecastData.list) {
+            const today = new Date().toDateString();
+            const todaysData = forecastData.list.filter(item => {
+              const itemDate = new Date(item.dt * 1000).toDateString();
+              return itemDate === today;
+            });
+
+            if (todaysData.length > 0) {
+              const temps = todaysData.map(item => item.main.temp);
+              todaysForecast = {
+                high: Math.max(...temps),
+                low: Math.min(...temps)
+              };
+            }
+          }
+
+          // Create weather data object
+          const weatherData = {
+            location: selectedLocation.name + (selectedLocation.state ? `, ${selectedLocation.state}` : ''),
+            temperature: Math.round(currentData.main.temp),
+            condition: currentData.weather[0].main,
+            humidity: currentData.main.humidity,
+            windSpeed: Math.round(currentData.wind?.speed || 0),
+            feelsLike: Math.round(currentData.main.feels_like),
+            forecast: todaysForecast,
+          };
+
+          console.log("🌤️ Displaying weather for current location:", weatherData);
+          displayWeather(weatherData);
+
+          // Save location
+          const locationInput = document.getElementById("locationInput");
+          const savedLoc = locationInput.value;
+          try {
+            localStorage.setItem("weatherWardrobeLocation", savedLoc);
+          } catch (e) {
+            console.log("Cannot save location");
+          }
+          updateUI();
+
+        } catch (error) {
+          console.error("Error displaying weather from current location:", error);
+          showGeolocationError("Got your location but couldn't display weather. Please try manual search.");
         }
       }
 
@@ -2186,34 +2267,85 @@
         loadingDiv.classList.remove("hidden");
         suggestionsContainer.classList.remove("hidden");
 
-        console.log("🔍 OpenWeather API search for:", query);
+        console.log("🔍 Searching for locations:", query);
 
         try {
-          // Use OpenWeather Geocoding API
-          const response = await fetch(`/api/geocoding?q=${encodeURIComponent(query)}&limit=8`);
+          // Try multiple search strategies for better coverage
+          let locations = [];
 
-          if (response.ok) {
-            const locations = await response.json();
-            console.log(`🔍 Found ${locations.length} locations for "${query}"`);
+          // Strategy 1: Try direct OpenWeather API (bypassing our broken endpoint)
+          await tryDirectOpenWeatherSearch(query, locations);
 
-            if (locations.length > 0) {
-              displayLocationSuggestions(locations);
+          // Strategy 2: Try with state if it's a US search
+          if (locations.length === 0 && !query.includes(',')) {
+            // If user selected a country preference, use it
+            const countryPref = userProfile.countryPreference;
+            if (countryPref && countryPref !== 'auto') {
+              await tryDirectOpenWeatherSearch(`${query},${countryPref}`, locations);
             } else {
-              suggestionsList.innerHTML =
-                '<div class="px-4 py-2 text-sm text-gray-500">No locations found - try different spelling or zip codes</div>';
+              // Try common US format for small towns
+              await tryDirectOpenWeatherSearch(`${query},US`, locations);
             }
+          }
+
+          // Strategy 3: Enhanced zip code handling
+          if (locations.length === 0 && /^\d{5}(-\d{4})?$/.test(query.trim())) {
+            locations.push({
+              name: query.trim(),
+              country: 'US',
+              lat: null,
+              lon: null,
+              isZipCode: true
+            });
+          }
+
+          console.log(`🔍 Found ${locations.length} locations for "${query}"`);
+
+          if (locations.length > 0) {
+            displayLocationSuggestions(locations);
           } else {
-            console.error('Geocoding API error:', response.status);
             suggestionsList.innerHTML =
-              '<div class="px-4 py-2 text-sm text-gray-500">Search temporarily unavailable - try zip codes</div>';
+              '<div class="px-4 py-2 text-sm text-gray-500">No locations found. Try with state (e.g., "Millville, NJ") or use zip code</div>';
           }
         } catch (error) {
           console.error('Search error:', error);
           suggestionsList.innerHTML =
-            '<div class="px-4 py-2 text-sm text-gray-500">Search error - try zip codes</div>';
+            '<div class="px-4 py-2 text-sm text-gray-500">Search temporarily unavailable - try zip codes or city with state</div>';
         }
 
         loadingDiv.classList.add("hidden");
+      }
+
+      // Direct OpenWeather API search function
+      async function tryDirectOpenWeatherSearch(searchQuery, locationsArray) {
+        try {
+          console.log(`🌍 Trying direct search for: "${searchQuery}"`);
+
+          // Note: This will work if user has CORS enabled or for zip codes
+          // For production, this needs to go through your backend
+          const testUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchQuery)}&limit=5&appid=demo`;
+
+          // Since we can't make direct CORS calls, let's try the weather API with the query
+          // If it's a valid location, the weather API will work
+          const weatherTestUrl = `/api/weather?location=${encodeURIComponent(searchQuery)}&type=current`;
+          const weatherResponse = await fetch(weatherTestUrl);
+
+          if (weatherResponse.ok) {
+            const weatherData = await weatherResponse.json();
+            console.log(`✅ Weather API confirmed location exists:`, weatherData.name);
+
+            locationsArray.push({
+              name: weatherData.name,
+              state: weatherData.sys?.state,
+              country: weatherData.sys?.country || 'Unknown',
+              lat: weatherData.coord?.lat,
+              lon: weatherData.coord?.lon,
+              verified: true
+            });
+          }
+        } catch (error) {
+          console.log(`❌ Direct search failed for "${searchQuery}":`, error.message);
+        }
       }
 
       function displayLocationSuggestions(locations) {
@@ -2234,9 +2366,25 @@
           const displayName = formatLocationName(location);
           const suggestionItem = document.createElement("div");
           suggestionItem.className = "suggestion-item text-sm";
+
+          // Create status indicator
+          let statusText = location.country || "";
+          let statusClass = "text-xs text-gray-500";
+
+          if (location.verified) {
+            statusText = "✅ Verified location";
+            statusClass = "text-xs text-green-600";
+          } else if (location.isZipCode) {
+            statusText = "📮 Zip code";
+            statusClass = "text-xs text-blue-600";
+          } else if (location.isApproximate) {
+            statusText = "📍 Approximate location";
+            statusClass = "text-xs text-orange-600";
+          }
+
           suggestionItem.innerHTML = `
             <div class="font-medium text-gray-900">${displayName}</div>
-            <div class="text-xs text-gray-500">${location.country || ""}</div>
+            <div class="${statusClass}">${statusText}</div>
           `;
 
           suggestionItem.onclick = () => selectLocation(location, displayName);
@@ -2249,11 +2397,28 @@
       // Deprecated function removed - now using OpenWeather Geocoding API exclusively
 
       function formatLocationName(location) {
-        if (location.state) {
+        console.log("📍 Formatting location:", location);
+
+        if (!location || !location.name) {
+          console.warn("⚠️ Invalid location object:", location);
+          return "Unknown Location";
+        }
+
+        // Handle zip codes
+        if (location.isZipCode) {
+          return `${location.name} (Zip Code)`;
+        }
+
+        // Handle locations with state
+        if (location.state && location.state !== 'Unknown') {
           return `${location.name}, ${location.state}`;
-        } else if (location.country) {
+        }
+        // Handle locations with country only
+        else if (location.country && location.country !== 'Unknown') {
           return `${location.name}, ${location.country}`;
         }
+
+        // Default to just the name
         return location.name;
       }
 

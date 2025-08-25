@@ -130,7 +130,8 @@
               </svg>
             </button>
           </div>
-          <!-- Profile Setup -->
+        </div>
+        <!-- Profile Setup -->
         <div
           id="profileSection"
           class="hidden p-6 border-b border-gray-200 bg-gray-50"
@@ -392,7 +393,7 @@
             </button>
           </div>
         </div>
-          <!-- Location Input -->
+        <!-- Location Input -->
         <div class="p-6">
           <!-- Saved Location Display -->
           <div id="savedLocationDiv" class="hidden mb-6">
@@ -896,7 +897,7 @@
         <p>Stay comfortable, dress smart! 🌤️</p>
       </div>
     </div>
-      <script>
+    <script>
       // OpenWeather API Configuration
       const API_KEY = '2af9656a996aa63081867e24aa1958cd';
       const WEATHER_API_BASE = 'https://api.openweathermap.org/data/2.5';
@@ -1111,7 +1112,7 @@
         const rounded = Math.round(speed);
         return units === 'metric' ? `${rounded} km/h` : `${rounded} mph`;
       }
-        function updateUI() {
+      function updateUI() {
         // Update welcome text
         const welcomeText = document.getElementById("welcomeText");
         if (userProfile.name) {
@@ -1409,7 +1410,7 @@
 
         console.log("Edit mode activated, country-first flow enabled");
       }
-        function handleCountrySelection(countryCode) {
+      function handleCountrySelection(countryCode) {
         console.log("🌍 Country selected:", countryCode);
         selectedCountry = countryCode;
 
@@ -1685,7 +1686,7 @@
       function hideError() {
         document.getElementById("errorDiv").classList.add("hidden");
       }
-        async function searchLocations(query) {
+      async function searchLocations(query) {
         const suggestionsList = document.getElementById("suggestionsList");
         const loadingDiv = document.getElementById("loadingSuggestion");
         const suggestionsContainer = document.getElementById("locationSuggestions");
@@ -1959,7 +1960,7 @@
           throw error;
         }
       }
-        async function getWeather() {
+      async function getWeather() {
         console.log("🌤️ getWeather function called");
 
         const locationInput = document.getElementById("locationInput");
@@ -2356,7 +2357,7 @@
                 </svg>`;
         }
       }
-        function getClothingRecommendation(temp, condition, forecast) {
+      function getClothingRecommendation(temp, condition, forecast) {
         const lowerCondition = condition.toLowerCase();
         let baseTemp = temp;
 
@@ -2753,5 +2754,4 @@
     <!-- Secure API deployment -->
   </body>
 </html>
-          
-        </div>
+        

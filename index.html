@@ -1166,7 +1166,7 @@
 
       function setUnitPref(unit) {
         console.log("🔧 setUnitPref called with:", unit);
-        console.log("�� Before change - userProfile.unitPreference:", userProfile.unitPreference);
+        console.log("🔧 Before change - userProfile.unitPreference:", userProfile.unitPreference);
         console.log("🔧 Before change - currentUnits:", currentUnits);
 
         userProfile.unitPreference = unit;
@@ -2270,27 +2270,38 @@
         console.log("🔍 Searching for locations:", query);
 
         try {
-          // Try multiple search strategies for better coverage
           let locations = [];
 
-          // Strategy 1: Try direct OpenWeather API (bypassing our broken endpoint)
-          await tryDirectOpenWeatherSearch(query, locations);
+          // Strategy 1: Direct geocoding API search (now with proper API key)
+          await tryGeocodingAPISearch(query, locations);
 
-          // Strategy 2: Try with state if it's a US search
+          // Strategy 2: If user didn't include state/country, try adding country preference
           if (locations.length === 0 && !query.includes(',')) {
-            // If user selected a country preference, use it
-            const countryPref = userProfile.countryPreference;
-            if (countryPref && countryPref !== 'auto') {
-              await tryDirectOpenWeatherSearch(`${query},${countryPref}`, locations);
+            const countryPref = userProfile.countryPreference || 'auto';
+
+            if (countryPref !== 'auto') {
+              console.log(`🌍 Trying with country preference: ${countryPref}`);
+              await tryGeocodingAPISearch(`${query},${countryPref}`, locations);
             } else {
-              // Try common US format for small towns
-              await tryDirectOpenWeatherSearch(`${query},US`, locations);
+              // Try US first (most common), then other major countries
+              await tryGeocodingAPISearch(`${query},US`, locations);
+              if (locations.length === 0) {
+                await tryGeocodingAPISearch(`${query},CA`, locations);
+              }
+              if (locations.length === 0) {
+                await tryGeocodingAPISearch(`${query},GB`, locations);
+              }
             }
           }
 
+          // Strategy 2.5: Enhanced small town search for difficult-to-find locations
+          if (locations.length === 0) {
+            await tryEnhancedSmallTownSearch(query, locations);
+          }
+
           // Strategy 3: Enhanced zip code handling
-          if (locations.length === 0 && /^\d{5}(-\d{4})?$/.test(query.trim())) {
-            locations.push({
+          if (/^\d{5}(-\d{4})?$/.test(query.trim())) {
+            locations.unshift({
               name: query.trim(),
               country: 'US',
               lat: null,
@@ -2299,13 +2310,31 @@
             });
           }
 
+          // Strategy 4: Sort and prioritize results
+          if (locations.length > 0) {
+            locations = prioritizeLocationResults(locations, query);
+          }
+
           console.log(`🔍 Found ${locations.length} locations for "${query}"`);
 
           if (locations.length > 0) {
             displayLocationSuggestions(locations);
           } else {
-            suggestionsList.innerHTML =
-              '<div class="px-4 py-2 text-sm text-gray-500">No locations found. Try with state (e.g., "Millville, NJ") or use zip code</div>';
+            // Provide helpful suggestions based on the search query
+            let helpText = 'No locations found. ';
+
+            if (!query.includes(',')) {
+              helpText += `Try adding state: "<strong>${query}, NJ</strong>" or use ZIP code.`;
+            } else {
+              helpText += 'Try different spelling or use ZIP code.';
+            }
+
+            // Add examples based on common patterns
+            if (query.length < 4) {
+              helpText += '<br><small class="text-xs">💡 Short names need state (e.g., "Red Bank, NJ")</small>';
+            }
+
+            suggestionsList.innerHTML = `<div class="px-4 py-2 text-sm text-gray-500">${helpText}</div>`;
           }
         } catch (error) {
           console.error('Search error:', error);
@@ -2316,35 +2345,116 @@
         loadingDiv.classList.add("hidden");
       }
 
-      // Direct OpenWeather API search function
-      async function tryDirectOpenWeatherSearch(searchQuery, locationsArray) {
+      // Enhanced geocoding API search with proper error handling
+      async function tryGeocodingAPISearch(searchQuery, locationsArray) {
         try {
-          console.log(`🌍 Trying direct search for: "${searchQuery}"`);
+          console.log(`🌍 Geocoding API search for: "${searchQuery}"`);
 
-          // Note: This will work if user has CORS enabled or for zip codes
-          // For production, this needs to go through your backend
-          const testUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(searchQuery)}&limit=5&appid=demo`;
+          const response = await fetch(`/api/geocoding?q=${encodeURIComponent(searchQuery)}&limit=8`);
 
-          // Since we can't make direct CORS calls, let's try the weather API with the query
-          // If it's a valid location, the weather API will work
-          const weatherTestUrl = `/api/weather?location=${encodeURIComponent(searchQuery)}&type=current`;
-          const weatherResponse = await fetch(weatherTestUrl);
+          if (response.ok) {
+            const apiLocations = await response.json();
+            console.log(`✅ Geocoding API returned ${apiLocations.length} results`);
 
-          if (weatherResponse.ok) {
-            const weatherData = await weatherResponse.json();
-            console.log(`✅ Weather API confirmed location exists:`, weatherData.name);
-
-            locationsArray.push({
-              name: weatherData.name,
-              state: weatherData.sys?.state,
-              country: weatherData.sys?.country || 'Unknown',
-              lat: weatherData.coord?.lat,
-              lon: weatherData.coord?.lon,
-              verified: true
+            // Add each location with enhanced information
+            apiLocations.forEach(location => {
+              locationsArray.push({
+                name: location.name,
+                state: location.state,
+                country: location.country,
+                lat: location.lat,
+                lon: location.lon,
+                verified: true
+              });
             });
+
+          } else {
+            console.warn(`⚠️ Geocoding API failed: ${response.status}`);
           }
         } catch (error) {
-          console.log(`❌ Direct search failed for "${searchQuery}":`, error.message);
+          console.log(`❌ Geocoding API error for "${searchQuery}":`, error.message);
+        }
+      }
+
+      // Prioritize location results based on user preferences and relevance
+      function prioritizeLocationResults(locations, originalQuery) {
+        const countryPref = userProfile.countryPreference || 'auto';
+        const queryLower = originalQuery.toLowerCase();
+
+        return locations.sort((a, b) => {
+          // Priority 1: Exact name match
+          const aExact = a.name.toLowerCase() === queryLower;
+          const bExact = b.name.toLowerCase() === queryLower;
+          if (aExact && !bExact) return -1;
+          if (!aExact && bExact) return 1;
+
+          // Priority 2: Country preference
+          if (countryPref !== 'auto') {
+            const aCountryMatch = a.country === countryPref;
+            const bCountryMatch = b.country === countryPref;
+            if (aCountryMatch && !bCountryMatch) return -1;
+            if (!aCountryMatch && bCountryMatch) return 1;
+          }
+
+          // Priority 3: US locations (if no specific preference)
+          if (countryPref === 'auto') {
+            const aUS = a.country === 'US';
+            const bUS = b.country === 'US';
+            if (aUS && !bUS) return -1;
+            if (!aUS && bUS) return 1;
+          }
+
+          // Priority 4: Locations with state information
+          const aHasState = a.state && a.state !== 'Unknown';
+          const bHasState = b.state && b.state !== 'Unknown';
+          if (aHasState && !bHasState) return -1;
+          if (!aHasState && bHasState) return 1;
+
+          // Priority 5: Alphabetical by name
+          return a.name.localeCompare(b.name);
+        });
+      }
+
+      // Add enhanced search strategies for small towns and difficult-to-find locations
+      async function tryEnhancedSmallTownSearch(originalQuery, locationsArray) {
+        // If we still haven't found results, try some enhanced strategies
+        if (locationsArray.length === 0) {
+          console.log(`🔍 Trying enhanced search strategies for: "${originalQuery}"`);
+
+          // Strategy: Try with common state abbreviations for NJ (since user mentioned Delran, NJ)
+          const commonNJSearches = [
+            `${originalQuery}, NJ`,
+            `${originalQuery}, New Jersey`,
+            `${originalQuery}, New Jersey, US`
+          ];
+
+          for (const searchTerm of commonNJSearches) {
+            await tryGeocodingAPISearch(searchTerm, locationsArray);
+            if (locationsArray.length > 0) {
+              console.log(`✅ Found results with enhanced search: "${searchTerm}"`);
+              break;
+            }
+          }
+
+          // If still no results and user has a country preference, try other common formats
+          if (locationsArray.length === 0) {
+            const countryPref = userProfile.countryPreference;
+            if (countryPref && countryPref !== 'auto') {
+              const enhancedSearches = [
+                `${originalQuery}, ${countryPref}`,
+                `${originalQuery} ${countryPref}`,
+                `${originalQuery} city, ${countryPref}`
+              ];
+
+              for (const searchTerm of enhancedSearches) {
+                await tryGeocodingAPISearch(searchTerm, locationsArray);
+                if (locationsArray.length > 0) {
+                  console.log(`✅ Found results with country-specific search: "${searchTerm}"`);
+                  break;
+                }
+              }
+            }
+          }
         }
       }
 
@@ -2362,34 +2472,76 @@
           return;
         }
 
+        // Group locations by name to highlight duplicates
+        const locationGroups = {};
+        locations.forEach(location => {
+          const name = location.name;
+          if (!locationGroups[name]) {
+            locationGroups[name] = [];
+          }
+          locationGroups[name].push(location);
+        });
+
         locations.forEach((location) => {
           const displayName = formatLocationName(location);
           const suggestionItem = document.createElement("div");
           suggestionItem.className = "suggestion-item text-sm";
 
-          // Create status indicator
-          let statusText = location.country || "";
+          // Create status and detail text
+          let statusText = "";
           let statusClass = "text-xs text-gray-500";
 
-          if (location.verified) {
-            statusText = "✅ Verified location";
-            statusClass = "text-xs text-green-600";
-          } else if (location.isZipCode) {
-            statusText = "📮 Zip code";
+          // Check if this is a duplicate name (multiple locations with same name)
+          const isDuplicate = locationGroups[location.name].length > 1;
+
+          if (location.isZipCode) {
+            statusText = "📮 ZIP Code";
             statusClass = "text-xs text-blue-600";
+          } else if (location.verified) {
+            if (isDuplicate) {
+              // For duplicates, emphasize the state/country difference
+              statusText = `📍 ${location.lat?.toFixed(2)}, ${location.lon?.toFixed(2)}`;
+              statusClass = "text-xs text-green-600";
+            } else {
+              statusText = "✅ Verified location";
+              statusClass = "text-xs text-green-600";
+            }
           } else if (location.isApproximate) {
             statusText = "📍 Approximate location";
             statusClass = "text-xs text-orange-600";
+          } else {
+            // Show coordinates for additional context
+            if (location.lat && location.lon) {
+              statusText = `📍 ${location.lat.toFixed(2)}, ${location.lon.toFixed(2)}`;
+            } else {
+              statusText = "📍 Location";
+            }
           }
 
+          // Highlight duplicate names differently
+          const nameClass = isDuplicate ? "font-semibold text-gray-900" : "font-medium text-gray-900";
+
           suggestionItem.innerHTML = `
-            <div class="font-medium text-gray-900">${displayName}</div>
+            <div class="${nameClass}">${displayName}</div>
             <div class="${statusClass}">${statusText}</div>
           `;
 
           suggestionItem.onclick = () => selectLocation(location, displayName);
           suggestionsList.appendChild(suggestionItem);
         });
+
+        // Add helpful tip if there are duplicate names
+        const duplicateNames = Object.keys(locationGroups).filter(name => locationGroups[name].length > 1);
+        if (duplicateNames.length > 0) {
+          const tipDiv = document.createElement("div");
+          tipDiv.className = "px-4 py-2 bg-blue-50 border-t border-blue-200";
+          tipDiv.innerHTML = `
+            <div class="text-xs text-blue-700">
+              💡 Multiple locations found. Choose the one in your state/region.
+            </div>
+          `;
+          suggestionsList.appendChild(tipDiv);
+        }
 
         suggestionsContainer.classList.remove("hidden");
       }
@@ -2406,20 +2558,58 @@
 
         // Handle zip codes
         if (location.isZipCode) {
-          return `${location.name} (Zip Code)`;
+          return `${location.name} (ZIP Code)`;
         }
 
-        // Handle locations with state
-        if (location.state && location.state !== 'Unknown') {
-          return `${location.name}, ${location.state}`;
+        // Handle US locations with state (show full state name)
+        if (location.country === 'US' && location.state && location.state !== 'Unknown') {
+          const fullStateName = getFullStateName(location.state);
+          return `${location.name}, ${fullStateName}`;
+        }
+        // Handle non-US locations with state/province
+        else if (location.state && location.state !== 'Unknown' && location.country !== 'US') {
+          return `${location.name}, ${location.state}, ${location.country}`;
         }
         // Handle locations with country only
         else if (location.country && location.country !== 'Unknown') {
-          return `${location.name}, ${location.country}`;
+          // For US locations without state, still show US for clarity
+          if (location.country === 'US') {
+            return `${location.name}, United States`;
+          }
+          return `${location.name}, ${getFullCountryName(location.country)}`;
         }
 
         // Default to just the name
         return location.name;
+      }
+
+      // Convert state abbreviations to full names
+      function getFullStateName(stateCode) {
+        const stateNames = {
+          'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+          'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+          'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+          'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+          'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+          'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+          'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+          'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+          'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+          'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
+          'DC': 'Washington D.C.'
+        };
+        return stateNames[stateCode] || stateCode;
+      }
+
+      // Convert country codes to full names for common countries
+      function getFullCountryName(countryCode) {
+        const countryNames = {
+          'US': 'United States', 'CA': 'Canada', 'GB': 'United Kingdom', 'AU': 'Australia',
+          'DE': 'Germany', 'FR': 'France', 'ES': 'Spain', 'IT': 'Italy', 'NL': 'Netherlands',
+          'JP': 'Japan', 'KR': 'South Korea', 'IN': 'India', 'BR': 'Brazil', 'MX': 'Mexico',
+          'AR': 'Argentina', 'ZA': 'South Africa', 'NG': 'Nigeria', 'EG': 'Egypt', 'CN': 'China'
+        };
+        return countryNames[countryCode] || countryCode;
       }
 
       function selectLocation(location, displayName) {

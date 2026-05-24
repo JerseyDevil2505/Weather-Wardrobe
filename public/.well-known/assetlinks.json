@@ -1,0 +1,8 @@
+[{
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+          "namespace": "android_app",
+          "package_name": "com.dwTTXuWNUGQa.natively",
+          "sha256_cert_fingerprints": ["B3:77:2C:F2:D5:10:4D:20:56:56:9D:F7:54:25:D8:D6:57:F7:29:F7:C2:23:55:EE:C7:92:FC:64:17:CA:8B:3C"]
+    }
+}]
